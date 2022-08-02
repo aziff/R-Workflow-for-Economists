@@ -1,0 +1,558 @@
+---
+title: "Structure"
+subtitle: "Chapter 3"
+author: "Anna Ziff"
+date: "R Workflow for Economists"
+thanks: "Please contact anna.ziff@duke.edu if there are errors."
+output: pdf_document
+bibliography: ../R-for-Economists.bib
+header-includes:
+    - \usepackage{fancyhdr}
+    - \usepackage{hyperref}
+    - \pagestyle{fancy}
+    - \fancyfoot[R]{Anna Ziff}
+    - \fancyfoot[L]{\today}
+    - \fancyhead[R, C, L]{}
+    - \renewcommand{\headrulewidth}{0pt}
+urlcolor: blue
+---
+
+
+\tableofcontents
+\clearpage
+
+# Logical Operations
+
+Recall from chapter 1 that a logical object can take two values: \texttt{TRUE} or \texttt{FALSE}. Logical operators, those that have logical objects as inputs or outputs, are commonly used and crucial to understand before we discuss conditional statements and loops. We will define $a$, $b$, $c$, and $d$ to help demonstrate logical operators.
+```{r eval = TRUE}
+a <- 3
+b <- 8
+c <- c(1, 9, 3)
+d <- c(7, 10, 3)
+```
+
+The inequalities, $<, >, \leq, \geq$, are denoted \texttt{<, >, <=, >=}, respectively.
+```{r eval = TRUE}
+a > b
+a <= b
+```
+
+Note that we can also apply these operators to vectors with more than one element.
+```{r eval = TRUE}
+c
+d
+c < d
+```
+
+The operator \texttt{==} allows us to test if two objects are equal. The operator \texttt{!=} allows us to test if two objects are not equal.
+```{r eval = TRUE}
+a == b
+c != d
+```
+
+Generally, \texttt{!} indicates negation.
+```{r eval = TRUE}
+is.character(b)
+!is.character(b)
+```
+
+We can combine logical operators using \texttt{\&} (conjunction, "and") or \texttt{|} (disjunction, "or"). 
+```{r eval = TRUE}
+(a > b) & (b != 7)
+(a > b) | (b != 7)
+```
+
+If there are many logical comparisons, it is useful to have functions that output \texttt{TRUE} if any or all of the comparisons are true.
+```{r eval = TRUE}
+c < d
+any(c < d)
+all(c < d)
+```
+
+If you are comparing objects with more than one element, you may want \texttt{TRUE} if the two objects are identical and \texttt{FALSE} otherwise. That is, you do not want a logical vector with more than one element.
+```{r eval = TRUE}
+c == d
+identical(c, d)
+```
+
+## Practice Exercises 3.1
+1. Define a vector \texttt{x} of 10 random draws from the uniform $[0,1]$ distribution. Test if each element is greater than or equal to 0.9. 
+2. Define a variable that is \texttt{TRUE} if at least 1 element of \texttt{x} is greater than or equal to 0.9.
+
+# Conditional Statements
+Conditional statements allow you to dictate different actions depending on the outcome of a condition. The general syntax is as follows.
+```{r eval = FALSE}
+if (<condition>) {
+  <command if condition is true>
+}
+```
+
+If the condition, denoted in a general way as \texttt{<condition>}, is true, then the commands inside the brackets are executed. Otherwise, if the condition is false, R will continue executing the next line of code. Here is a concrete example.
+
+```{r eval = TRUE}
+f <- runif(1, min = 0, max = 1)  
+f
+if (f < 0.5) {
+  print("The random number is less than one half.")
+}
+```
+
+If you want R to execute a different command if the condition is false, then the general code is as follows.
+```{r eval = FALSE}
+if (<condition>) {
+  <command if condition is true>
+} else {
+  <command if condition is false>
+}
+```
+
+Here is a concrete example. 
+```{r eval = TRUE}
+f
+if (f < 0.5) {
+  print("The random number is less than one half.")
+} else {
+  print("The random number is greater than or equal to one half.")
+}
+```
+
+It is possible that there are more than two logical possibilities.
+```{r eval = TRUE}
+f
+if (f < 0.25) {
+  print("The random number is less than one quarter.")
+} else if (f >= 0.25 & f < 0.5) {
+  print("The random number is between one quarter and one half.")
+} else if (f >= 0.5 & f < 0.75) {
+  print("The random number is between one half and three quarters.")
+} else {
+  print("The random number is between three quarters and one.")
+}
+```
+
+Conditional statements can be nested. It is always best practice to have consistent use of indentations and brackets, but these conventions are especially important when nesting conditional statements. The below chunk produces the same results as the above chunk, but using nested conditional statements rather than \texttt{else if}.
+```{r eval = TRUE}
+f
+if (f < 0.5) {
+  if (f < 0.25) {
+    print("The random number is less than one quarter.")
+  }
+  else {
+    print("The random number is between one quarter and one half.")
+  }
+} else {
+  if (f < 0.75) {
+    print("The random number is between one half and three quarters.")
+  } else {
+    print("The random number is between three quarters and one.")
+  }
+}
+
+```
+
+
+It is important to be careful with the conditions you use. A common error is to have a condition that has more than one element (i.e., a logical vector with length greater than 1). In this case, R will use the first element and throw a warning.
+```{r eval = TRUE}
+g <- runif(2, min = 0, max = 1) 
+g
+if (g < 0.5) {
+  print("The random number is less than one half.")
+}
+g < 0.5
+```
+
+The function \texttt{ifelse()} is sometimes useful when applying functions to vectors or assigning values to a variable. It follows the same logic as conditional statements, but allows for a more concise implementation. 
+```{r eval = TRUE}
+x <- 2:-1
+y <- ifelse(x >= 0, sqrt(x), NA)
+ifelse(is.na(y), 0, 1)
+```
+
+## Practice Exercises 3.2
+1. Run the following (incorrect) code. How can you change the condition to avoid the warning and ensure that the print out is correct?
+```{r, eval = FALSE}
+g <- runif(2, min = 0, max = 1) 
+g
+if (g < 0.5) {
+  print("All the random numbers are less than one half.")
+}
+```
+
+# Loops
+Loops indicate portions of the code to be executed more than once. The loop ends when the number of iterations has been reached or there is an exit condition.
+
+## \texttt{for}
+The \texttt{for} instruction involves running the code a pre-specified number of iterations. The general syntax is as follows.
+```{r eval = FALSE}
+for (i in <vector>) {
+  <commands>
+}
+```
+
+R iterates through each value of \texttt{<vector>} and executes the commands inside the brackets. Once the last element of the vector is reached, R executes the next line of code. Here is an example.
+```{r eval = TRUE}
+for (i in 1:3) {
+  print(factorial(i))
+}
+```
+
+## \texttt{while}
+The \texttt{while} instruction involves running the code until an exit condition is satisfied. The general syntax is as follows.
+```{r eval = FALSE}
+while (<condition>) {
+  <command>
+}
+```
+
+Here is an example.
+```{r eval = TRUE}
+j <- 1
+while (j < 4) {
+  print(factorial(j))
+  j <- j + 1
+}
+```
+
+## Other Loop Instructions
+In some contexts, it is useful to further control a loop. The instruction \texttt{break} tells R to exit the loop.
+```{r eval = TRUE}
+l <- c(2, 4, 7)
+for (i in l) {
+  if (i == 4) {
+    out <- i
+    break
+  }
+}
+out
+```
+
+The instruction \texttt{next} tells R to move to the next iteration.
+```{r eval = TRUE}
+for (i in l) {
+  if (i == 4) {
+    next
+  }
+  print(i)
+}
+```
+
+## Efficiency
+A common maxim that loops are slow in R and it is best to avoid them. It is true that there are faster alternatives. The use of vectorized operations is preferable when possible as these operations are incredibly fast. The function \texttt{system.time()} allows you to test the speed of your code. Evidently, the vectorized operation \texttt{factorial(1:100000)} is faster than the loop. The divergence in speeds between the two methods will be larger for more complex functions and more iterations. 
+```{r eval = TRUE}
+system.time(for (i in 1:100000) {
+  factorial(i)
+}) 
+system.time(factorial(1:100000))
+```
+
+Regardless, it is still crucial to be comfortable with loops. For smaller computations, like factorial, the difference is very minor. Sometimes, the code is clearer and makes more sense with a loop than with a vectorized operation. 
+
+## Practice Exercises 3.3
+1. Define an object \texttt{out} with the value 0. In a \texttt{for} loop iterating 1, 2, \ldots, 20, add the reciprocal to \texttt{out} if the number is even. The sum should be $\frac{1}{2} + \frac{1}{4} + \ldots + \frac{1}{20}$. 
+
+## Apply Functions
+A family of functions allows you to take advantage of R's efficiency with vectorized operations, rather than relying too heavily on loops. There are several different functions within this family that differ by what object the function is applied and the desired output.
+
+### \texttt{apply()}
+
+The function \texttt{apply()} applies a function to the rows or columns (these are called margins) of matrices or data frames. While it is not faster than loops, it allows for more compact code. Following chapter 19 in @boehmke_data_2016, we will use the built-in data frame \texttt{mtcars}. To see the first 6 rows of \texttt{mtcars}, use the \texttt{head()} function.
+```{r eval = TRUE}
+head(mtcars)
+```
+
+
+If we want the mean of each column, we can use the \texttt{apply()} function. Note that \texttt{2} corresponds to the second margin of the data frame, i.e., the columns. Notice that the output is a named vector.
+```{r eval = TRUE}
+x <- apply(mtcars, 2, mean)
+x
+str(x)
+```
+
+The first margin of the data frame is row.
+```{r eval = TRUE}
+apply(mtcars, 1, max)
+```
+
+If the function to be applied has other arguments, these can be specified separated by commas. Here is an example where we trim 10\% of observations from each end. 
+```{r eval = TRUE}
+out <- apply(mtcars, 2, mean, trim = 0.1)
+out
+```
+
+There are some function that are faster than the analogous implementation in \texttt{apply()}. These include \texttt{summary()}, \texttt{colSums()}, \texttt{rowSums()}, \texttt{colMeans()}, and \texttt{rowMeans()}. 
+
+```{r eval = TRUE}
+colMeans(mtcars)
+summary(mtcars)
+summary(mtcars$mpg)
+```
+
+### \texttt{lapply()}
+
+The \texttt{lapply()} function is designed to apply functions to lists and return a list. It efficiently loops through a list and applies the specified function to each element.
+
+```{r eval = TRUE}
+carlist <- as.list(mtcars[1:5, ]) # Convert the first 5 rows into a list
+str(carlist)
+lapply(carlist, mean)
+```
+
+The elements of the list \texttt{carlist} are all vectors. A list may contain matrices or data frames as well. In that case, we may want to iterate through each element of the list and apply the function to each item of each element. This is efficiently done through nesting apply functions. To demonstrate, we create a list in which each element is a data frame.
+```{r eval = TRUE}
+carlist <- list(mazda = mtcars[1:2, ], hornet = mtcars[4:5, ], merc = mtcars[8:14, ])
+carlist
+```
+
+The \texttt{x} is a stand-in value.
+```{r}
+lapply(carlist, function(x) apply(x, 2, mean))
+```
+
+
+### \texttt{sapply()}
+The function \texttt{sapply()} is very similar to \texttt{lapply()} except it outputs a simplified result whenever possible. If the output is a list with elements of length 1 (more than 1), \texttt{sapply()} returns a vector (matrix). Otherwise, \texttt{sapply()} returns a list.
+```{r eval = TRUE}
+sapply(carlist, function(x) apply(x, 2, mean))
+```
+
+### \texttt{tapply()}
+The function \texttt{tapply()} efficiently applies functions over subsets of a vector. It is useful when you want to apply functions within groups. The below code calculates the average miles per gallon (\texttt{mpg}) grouped by the number of cylinders (\texttt{cyl}).
+```{r eval = TRUE}
+tapply(mtcars$mpg, mtcars$cyl, mean)
+```
+
+Here is an example of the same situation but for each column in the data frame. 
+```{r eval = TRUE}
+apply(mtcars, 2, function(x) tapply(x, mtcars$cyl, mean))
+```
+
+### Practice Exercises 3.4
+1. Create a list with 4 elements, each containing a vector with 30 numbers: the first element is 30 draws from the uniform $[0,1]$ distribution, the second element is 30 draws from the uniform $[1, 2]$ distribution, the third element is 30 draws from the uniform $[2, 3]$ distribution, and the fourth element is 30 draws from the uniform $[3, 4]$ distribution. How does \texttt{lapply} and \texttt{sapply} differ here?
+2. Here is an example of implementing the function \texttt{quantile}. Calculate the 25th, 50th, and 75th percentile for the columns of \texttt{mtcars} using \texttt{apply()}.
+```{r}
+quantile(1:100, probs = c(0.10, 0.90))
+```
+
+# Functions 
+By now, you have been exposed to functions, both those built into the base packages of R, and those that are accessible from external packages. Now, you will write your own functions. User-defined functions are crucial in the workflow. They allow for tasks to be more general and automatic. Often, they make the script easier to read and understand. They also make it easier to test and debug, resulting in more correct output. Even if it feels burdensome to write functions, it is usually worthwhile. 
+
+The example function we will be using is very simple from @boehmke_data_2016. Suppose we want a function to calculate the present value of a future value given interest rate and number of periods. The output should be rounded to three digits.
+```{r eval = TRUE}
+calc_pv <- function(fv, r, n) { 
+  pv <- fv / ((1 + r)^n)
+  return(round(pv, 3))
+}
+```
+
+There are three components of the function. The \texttt{body} is the meat of the function. It contains all the calculations, that is, everything between \texttt{\{\}}.
+```{r eval = TRUE}
+body(calc_pv)
+```
+
+The \texttt{formals} are the inputs the function requires. These are also called arguments. 
+```{r eval = TRUE}
+formals(calc_pv)
+```
+
+Finally, the \texttt{environment} includes all of the named objects accessible to the function. 
+```{r eval = TRUE}
+environment(calc_pv)
+```
+
+The function is called the same way as built-in functions.
+```{r eval = TRUE}
+calc_pv(fv = 1000, r = 0.08, n = 10)
+calc_pv(1000, 0.08, 10) # Positional matching
+```
+
+It might be convenient to set default values for some arguments. You can see examples of default values in many built-in functions. In the documentation for \texttt{mean()}, the arguments \texttt{trim} and \texttt{na.rm} are listed in the description with \texttt{trim = 0} and \texttt{na.rm = FALSE}. Setting default values for your own code can help prevent errors and make the function easier to use.
+```{r eval = TRUE}
+calc_pv <- function(fv, r = 0.08, n) { 
+  pv <- fv / ((1 + r)^n)
+  return(round(pv, 3))
+}
+```
+
+Now, you can use the function even without specifying \texttt{r}.
+```{r eval = TRUE}
+calc_pv(fv = 1000, n = 20)
+```
+
+If you specify a function with an argument that is not used, it will not throw an error or warning. The technical name for this is lazy evaluation.
+```{r eval = TRUE}
+calc_pv <- function(fv, r, n, x) {
+  pv <- fv / ((1 + r)^n)
+  return(round(pv, 3))
+}
+calc_pv(fv = 1000, r = 0.08, n = 10) # No need to pass a value to x
+```
+
+In the present value example, the output is one number. Functions can also return more than one object. Above, we used the function \texttt{return()} to be very clear about what the function is returning. While this is good practice, the function will default to returning the last object of the body.
+```{r eval = TRUE}
+arith <- function(x, y) {
+  x + y 
+  x - y
+  x * y
+  x / y
+}
+arith(1, 2)
+```
+
+Returning a vector allows the function to return more than one result.
+```{r eval = TRUE}
+arith <- function(x, y) {
+  addition <- x + y 
+  subtraction <- x - y
+  multiplication <- x * y
+  division <- x / y
+  c(addition, subtraction, multiplication, division)
+}
+arith(1, 2)
+```
+
+Returning a list allows the function to return more than one result \textit{and} allows for an easier understanding of the output.
+```{r eval = TRUE}
+arith <- function(x, y) {
+  addition <- x + y 
+  subtraction <- x - y
+  multiplication <- x * y
+  division <- x / y
+  c(list(Addition = addition, Subtraction = subtraction, 
+         Multiplication = multiplication, Division = division))
+}
+arith(1, 2)
+```
+
+## Scoping
+When writing functions, it is useful to have a sense of the scoping rules. These are the rules that R follows to decide on the value of the objects in a function. R will first search within the function. If all the objects are defined within the function, R does not search anymore.
+```{r eval = TRUE}
+calc_pv <- function() {
+  fv <- 1000
+  r <- 0.08
+  n <- 10
+  fv / ((1 + r)^n)
+}
+calc_pv()
+```
+
+If a value is not present within the function, R will expand the search up one level. The levels are demarcated with \texttt{\{\}}.
+```{r eval = TRUE}
+fv <- 1000
+calc_pv <- function() {
+  r <- 0.08
+  n <- 10
+  fv / ((1 + r)^n)
+}
+calc_pv()
+```
+
+These rules are general, including when the function takes arguments.
+```{r eval = TRUE}
+calc_pv <- function(fv, r) {
+  n <- 10
+  fv / ((1 + r)^n)
+}
+calc_pv(1000, 0.08)
+```
+
+## Niceties
+Our example functions are simple, but often actual functions can be complex. Your script may define and use many functions that have many inputs and outputs. Even if you are the only person who will ever read your code, it is useful to include some checks to help ensure you are properly using your function. Even though these checks take time, they can save trouble down the line. The function \texttt{stop()} stops the execution of the function and throws an error message.
+```{r, eval = TRUE, error = TRUE}
+calc_pv <- function(fv, r, n) {
+  
+  # Input validation
+  if (!is.numeric(fv) | !is.numeric(r) | !is.numeric(n)) {
+    stop("All inputs must be numeric.\n",
+         "The inputs are of the following classes:\n",
+         "fv: ", class(fv), "\n",
+         "r: ", class(r), "\n",
+         "n: ", class(n))
+  }
+  
+  pv <- fv / ((1 + r)^n)
+  return(round(pv, 3))
+  
+}
+calc_pv("1000", 0.08, 10)
+```
+
+
+Notice that our function can take in vectors. As discussed above, vectorized operations like this are very efficient in R.
+```{r eval = TRUE}
+calc_pv(fv = 1:10, r = 0.08, n = 10)
+```
+
+But what if one of the elements of the input vector is a missing value? 
+```{r eval = TRUE}
+calc_pv(fv = c(100, NA, 1000), r = 0.08, n = 10)
+```
+
+This is a frequent issue that arises when using functions within a larger script. Adding the argument \texttt{na.rm} allows you to specify how you want the function to handle \texttt{NA} values.
+```{r eval = TRUE}
+calc_pv <- function(fv, r, n, na.rm = FALSE) {
+  
+  # Input validation
+  if (!is.numeric(fv) | !is.numeric(r) | !is.numeric(n)) {
+    stop("All inputs must be numeric.\n",
+         "The inputs are of the following classes:\n",
+         "fv: ", class(fv), "\n",
+         "r: ", class(r), "\n",
+         "n: ", class(n))
+  }
+  
+  # na.rm argument
+  if (na.rm == TRUE) {
+    fv <- fv[!is.na(fv)] # Only keep non-missing values in fv
+  }
+  
+  pv <- fv / ((1 + r)^n)
+  return(round(pv, 3))
+  
+}
+calc_pv(fv = c(100, NA, 1000), r = 0.08, n = 10)
+calc_pv(fv = c(100, NA, 1000), r = 0.08, n = 10, na.rm = TRUE)
+```
+
+With input validation and conditional statements, the code to write functions can be very long. Just like in Matlab, you can write your function in a separate script.  The script should contain the entirety of the code for the function.
+```{r eval = FALSE}
+# Title: calc_pv.R
+
+calc_pv <- function(fv, r, n, na.rm = FALSE) {
+  
+  # Input validation
+  if (!is.numeric(fv) | !is.numeric(r) | !is.numeric(n)) {
+    stop("All inputs must be numeric.\n",
+         "The inputs are of the following classes:\n",
+         "fv: ", class(fv), "\n",
+         "r: ", class(r), "\n",
+         "n: ", class(n))
+  }
+  
+  # na.rm argument
+  if (na.rm == TRUE) {
+    fv <- fv[!is.na(fv)] # Only keep non-missing values in fv
+  }
+  
+  pv <- fv / ((1 + r)^n)
+  return(round(pv, 3))
+  
+}
+```
+
+The function \texttt{source()} allows you to add the function to your global environment. 
+```{r eval = FALSE}
+# Title: main.R 
+
+source("calc_pv.R")
+calc_pv(fv = c(100, NA, 1000), r = 0.08, n = 10, na.rm = TRUE)
+```
+
+## Practice Exercises 3.5
+1. Write a function to convert fahrenheit to celsius. Define a 10 $\times$ 10 matrix with 100 draws from the uniform $[-10, 100]$ distribution. Test your function on this matrix.
+2. The Fibonacci sequence is recursive: $x_n = x_{n-1} + x_{n-2}$. Write a function that takes $n$ as an argument and computes $x_n$. Recall that $x_0 = 0$ and $x_1 = 1$. Use a \texttt{for} loop to print the first 15 elements of the Fibonacci sequence. Bonus: try using \texttt{sapply} to print the first 15 elements of the Fibonacci sequence.
+
+
+# Further Reading
+The information from this chapter comes from chapters 18, 19 of @boehmke_data_2016 and chapters 5.2, 5.7-5.8 of @zamora_saiz_introduction_2020.
+
+## References

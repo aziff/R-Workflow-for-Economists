@@ -1,0 +1,600 @@
+---
+title: "Data Management"
+subtitle: "Chapter 5"
+author: "Anna Ziff"
+date: "R Workflow for Economists"
+thanks: "Please contact anna.ziff@duke.edu if there are errors."
+output: pdf_document
+bibliography: ../R-for-Economists.bib
+header-includes:
+    - \usepackage{fancyhdr}
+    - \usepackage{hyperref}
+    - \pagestyle{fancy}
+    - \fancyfoot[R]{Anna Ziff}
+    - \fancyfoot[L]{\today}
+    - \fancyhead[R, C, L]{}
+    - \renewcommand{\headrulewidth}{0pt}
+urlcolor: blue
+---
+
+```{r setup, include = FALSE}
+    knitr::opts_knit$set(root.dir = normalizePath("~/Desktop/Duke/projects/R-Workflow-for-Economists/Data/Gapminder")) 
+```
+
+
+\tableofcontents
+\clearpage
+
+In this chapter, we will go through the R functions needed for data management. The built-in R functions are useful tools and it is important to know their syntax. There are several packages that are widely used that are helpful to work with larger data, produce cleaner code, and be more efficient in data management. The suite of packages called \texttt{tidyverse} is especially common. 
+
+Here are all the libraries you should install for this chapter. Most of these are packages in \texttt{tidyverse}.
+```{r eval = TRUE, warning = FALSE, message = FALSE}
+library(dplyr)
+library(ggplot2)
+library(magrittr)
+library(readr)
+library(readxl)
+library(stringr)
+library(tidyr)
+```
+
+We will practice importing data. Go to the [Dropbox folder](https://www.dropbox.com/scl/fo/s3qhzupfr1o49ynpi085u/h?dl=0&rlkey=ifm8po06qu8ouqyriyg8voty2) with the example data. Download the entire folder to a convenient file on your computer and save the file path for use in the below notes.
+
+# Built-in Functions
+## Import and Export
+
+Importing text files, including those files with extensions \texttt{.txt} and \texttt{.csv} can be done with the function \texttt{read.table()}. This function reads a file and creates a data frame. The function \texttt{read.csv()} is a wrapper meaning it implements the same command but sets some defaults optimized for \texttt{.csv} files.
+```{r}
+df1 <- read.csv("gapminder.csv")
+str(df1)
+head(df1) # Display the first 5 rows
+```
+
+This command does the exact same thing.
+```{r}
+df2 <- read.table("gapminder.csv", header = TRUE, sep = ",")
+str(df2)
+```
+
+Here is an example of reading a \texttt{.txt} file with \texttt{read.delim()}. Note that we need to specify the delimiter, in this case a space. You will need to inspect your file to determine the delimiter. 
+```{r}
+df3 <- read.delim("gapminder.txt", sep = " ")
+str(df3)
+```
+
+These three functions have many arguments available to adjust how the data files are read. The argument \texttt{stringsAsFactors} is automatically set to \texttt{FALSE}. If it is set to \texttt{TRUE}, then variables with character strings are read in as factors.
+```{r}
+df4 <- read.csv("gapminder.csv", stringsAsFactors = TRUE)
+str(df4)
+```
+
+You can specify the classes of all the columns using the argument \texttt{colClasses}. This is especially usefull if the dataset is larger as it means that R does not need to determine the classes itself.
+```{r}
+df5 <- read.csv("gapminder.csv", 
+                colClasses = c("character", "integer", "double", "factor"))
+str(df5)
+```
+
+Column names (or variable names) and row names can be set while reading the file as well.
+```{r}
+df6 <- read.csv("gapminder.csv",
+                col.names = c("Country", "GDP", "GiniIndex", "Region")) 
+# row.names for rows
+str(df6) 
+```
+
+If you just want to get a sense of what types of variables a dataset contains, you can use the \texttt{nrows} argument to read in very few rows. This is especially helpful with larger datasets. 
+```{r}
+checkcols <- read.csv("gapminder.csv",
+                      nrows = 3)
+checkcols
+```
+
+The built-in functions to export data are very similar to those to import data. Again, \texttt{write.table()} is the general function with \texttt{write.csv()} being a wrapper for different file types. Here is an example data frame that we will export.
+
+```{r}
+df <- data.frame(id = seq(1:50),
+                 v1 = rnorm(50, mean = 10, sd = 2),
+                 v2 = rbinom(50, size = 1, prob = 0.5),
+                 v3 = c(TRUE, FALSE),
+                 v4 = c("Group 1", "Group 2", "Group 3", "Group 4", "Group 5"))
+head(df)
+```
+
+Before exporting, make sure the correct directory is set. Remember you can use \texttt{getwd()} to check and \texttt{setwd()} to change the directory.
+
+The function \texttt{write.csv()} exports a comma-delimited text file. You need to specify the object to be saved and the name of the file. The argument \texttt{row.names} determines whether the row names are exported as well. Unless you have custom row names, it is useful to set this argument to \texttt{FALSE}. 
+```{r}
+write.csv(df, file = "df_csv.csv", row.names = FALSE)
+```
+
+For greater generality, \texttt{write.table()} is available. 
+```{r}
+write.table(df, file = "df_table.txt", sep = "\t")
+```
+
+
+If you want to read Excel files, you will need an external package. A good option is the package \texttt{readxl} to access the function \texttt{read\_excel()}. This package relies on tibbles just like \texttt{readr} (discussed below).
+```{r}
+tib4 <- read_excel("gapminder.xlsx")
+head(tib4)
+```
+
+Other packages that allow you to read and write Excel files include \texttt{xlsx} and \texttt{r2excel}.
+
+There are other packages that allow you to import and export datasets in other formats. For example, the \texttt{foreign} package allows for data files from SPSS, SAS, and STATA. 
+
+### R Saved Objects
+There are R-specific data formats to save the environment or components of it. To save the entire environment, use the \texttt{.RData} format.
+```{r}
+ids <- 1:100
+verbose_sqrt <- function(num) {
+  if (num >= 0) {
+    return(sqrt(num))
+  } else {
+    return("Negative number input.")
+  }
+}
+save(ids, verbose_sqrt, file = "workspace.RData")
+```
+
+This file includes both the objects and the names of the objects. You can directly load \texttt{.RData} and the workspace is populated. If you only want to save one object, you can use \texttt{.rds} files instead. These do not save the object's name. They are very memory-efficient (similar to saving a zipped file).
+
+```{r}
+head(df)
+saveRDS(df, "dataframe.rds")
+```
+
+Importing these objects is done as follows.
+```{r}
+load("workspace.RData") # Imports objects and names
+mydf <- readRDS("dataframe.rds") # Imports one object assigned to mydf
+```
+
+
+## Select Variables
+```{r}
+df <- read.csv("gapminder_large.csv")
+str(df)
+```
+
+The built-in functions import data as data frames. Chapter 1 discusses how to select variables (columns). Here is a small review.
+
+```{r, eval = FALSE}
+df[, 1:3]
+df[, c(2, 4)]
+df[, "cpi_2017"]
+df[, c("lifeexp_2012", "cpi_2016")]
+df[c("country", "region")]
+df[1:3]
+df$gini_2015
+```
+
+## Rename and Create Variables
+
+The names of a data frame can be access with \texttt{names()}. This is an attribute of the data frame and can be used to rename all the variables this way.
+```{r}
+names(df)
+names(df) <- paste0("var", 1:length(names(df)))
+names(df)
+```
+
+An alternative is to use the function \texttt{setNames()}. This function can also be used for other data structures besides data frames, such as vectors.
+```{r}
+vnames <- c("country", "gdp_2015", "gini_2015", "region",      
+            "co2_2015", "co2_2016", "co2_2017", "co2_2018",   
+            "cpi_2012", "cpi_2013", "cpi_2014", "cpi_2015",    
+            "cpi_2016", "cpi_2017", "lifeexp_2012", "lifeexp_2013",
+            "lifeexp_2014", "lifeexp_2015", "lifeexp_2016", "lifeexp_2017",
+            "lifeexp_2018")
+df <- setNames(df, vnames)
+names(df)
+```
+
+It is also possible to rename a subset of the variables.
+```{r}
+names(df)[1] <- "COUNTRY"
+names(df)
+names(df)[2:3] <- c("GDP", "GINI")
+names(df)
+```
+
+
+Creating new variables can be done with \texttt{cbind()} as discussed in chapter 1. 
+```{r}
+random1 <- rnorm(dim(df)[1])
+head(random1)
+df <- cbind(df, random1)
+df[1:5, c("COUNTRY", "random1")]
+```
+
+This method has the advantage that it can be used to add more than one variable at a time.
+```{r}
+random2 <- runif(dim(df)[1])
+random3 <- rexp(dim(df)[1])
+df <- cbind(df, random2, random3)
+df[1:5, c("COUNTRY", "random2", "random3")]
+```
+
+The following shortcut is helpful to create one variable at a time.
+```{r}
+df$random4 <- df$random3^2
+df[1:5, c("COUNTRY", "random4")]
+```
+
+## Filter Observations
+Filtering observations can be done by row name or number, as shown in chapter 1. 
+```{r, eval = FALSE}
+df[1:3, ]
+df[c(3, 40), ]
+df[c("4", "17"), ]
+df[!c(1:190), ]
+df[-c(1:190), ]
+```
+
+Filtering can also be done using logical statements.
+```{r}
+df[df$random2 >= 1, ]
+df[df$random2 >= 1 & df$random3 <= 0.5, ]
+subset(df, df$random3 <= 0.05)[, c("COUNTRY", "random3")]
+```
+
+The \texttt{which()} function returns the row numbers that are being filtered.
+```{r}
+which(df$random3 <= 0.05)
+```
+
+## Organize
+
+Sorting can be done by one or more columns. Note that even though the rows are re-ordered, the original row names remain.
+```{r}
+dforder1 <- order(df$GINI)
+head(df[dforder1, c("COUNTRY", "GINI")])
+dforder2 <- order(df$region, df$GINI)
+head(df[dforder2, c("COUNTRY", "region", "GINI")])
+```
+
+## Merge
+
+As discussed in chapter 1, \texttt{rbind()} can be used to append additional observations. If using this approach, it is better to transform the new row(s) into a data frame. This will help avoid silently changing a variable type. 
+```{r, eval = FALSE}
+df1 <- df[1:98, ]
+df2 <- df[99:195, ]
+rbind(df1, df2)
+```
+
+An even more robust approach is to use the \texttt{merge()} function. This allows for the two data frames to have different variables and similar observations. As long as there is at least one variable common to both data frames, they can be merged. Here is a very simple example.
+```{r}
+df1 <- df[1:5, c("COUNTRY", "region")]
+df2 <- df[1:7, c("COUNTRY", "GDP", "GINI")]
+merge(df1, df2, by = "COUNTRY")
+```
+
+Note that \texttt{df2} has 7 observations while \texttt{df1} only has 5. Yet, the output of the merge has 5 observations. This is because the arguments \texttt{all.x} and \texttt{all.y} are set to \texttt{FALSE} by default. This means that only rows that appear in both are present in the output. If we set \texttt{all.y = TRUE}, all the rows of \texttt{df2} are added with missing values for \texttt{region}.
+```{r}
+merge(df1, df2, by = "COUNTRY", all.y = TRUE)
+```
+
+If you want to keep all the rows in both data frames, the argument \texttt{all = TRUE} sets both \texttt{all.x = TRUE} and \texttt{all.y = TRUE}.
+```{r}
+merge(df1, df2, by = "COUNTRY", all = TRUE)
+```
+
+Suppose the variable you are merging on has different names in the two data frames. The arguments \texttt{by.x} and \texttt{by.y} allow for you to specify both variables.
+```{r}
+names(df1)[1] <- "country"
+merge(df1, df2, by.x = "country", by.y = "COUNTRY")
+```
+
+If the two data frames have different variables with the same name, the merge will not combine these columns. This even applies if the columns are different types.
+```{r}
+df1 <- df[c("COUNTRY", "region", "GDP")]
+df1$GDP <- as.character(df1$GDP) # GDP is now character in df1
+merge(df1, df2, by = "COUNTRY")
+```
+
+
+# \texttt{tidyverse} Functions
+Hadley Wickham developed the idea behind a suite of packages that streamline data work called \texttt{tidyverse}. There are many packages in this suite that relate to different types of datasets and parts of the data process. This chapter goes through \texttt{dplyr}, \texttt{tidyr}, and \texttt{readr}.
+
+
+## Import and Export: \texttt{readr}
+The functions in the \texttt{readr} package to read and write data are faster than the built-in functions. Apart from efficiency, they have another advantage in that they help ensure consistency in the imported data. For example, if there are spaces in the variable name, \texttt{read.csv()}, the built-in function, will automatically remove these. The \texttt{readr} function \texttt{read\_csv()} will not remove them. 
+
+
+```{r}
+tib1 <- read_csv("gapminder.csv")
+str(tib1)
+```
+
+Immediately, you can see that the data structure is different. The package \texttt{readr}, and all the packages in the \texttt{tidyverse} suite, rely on a data structure called tibbles instead of data frames. The two main differences between tibbles and data frames are the following. More information on the differences is available [here](https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html).
+
+* Unlike data frames, tibbles only show the first 10 rows and enough columns to fit on the screen. Each column is printed with its type.
+
+* When subsetting, \texttt{[]} always returns another tibble and \texttt{[[]]} always returns a vector. 
+
+Just like in \texttt{read.csv()}, you can specify the columns.
+```{r}
+tib2 <- read_csv("gapminder.csv",
+                 col_types = list(col_character(),
+                                  col_integer(),
+                                  col_double(),
+                                  col_factor()))
+str(tib2)
+```
+
+If you want to completely rename the columns, you can do so with the option \texttt{col\_names}. You will just need to tell R to skip reading in the first line of the file.
+```{r}
+tib3 <- read_csv("gapminder.csv", skip = 1,
+                 col_names = c("V1", "V2", "V3", "V4"))
+str(tib3)
+```
+
+The argument \texttt{n\_max} determines the maximum number of lines that are read. 
+```{r}
+read_csv("gapminder.csv", n_max = 3)
+```
+
+The \texttt{readr} analogues to \texttt{read.table()} and \texttt{read.delim()} are \texttt{read\_table()} and \texttt{read\_delim()}. They have similar arguments as \texttt{read\_csv()}. Reading in data files usually presents unexpected difficulties and complications, and the myriad of arguments available can help address any formatting issues automatically.
+
+The write functions in \texttt{readr} are faster than the built-in functions and automatically omit row names. 
+```{r}
+write_csv(df, file = "df_csv_readr.csv")
+```
+
+### Practice Exercises 5.1
+1. Another way to list the column types is string shortcuts. For example \texttt{"d"} for double, \texttt{"c"} for character, etc. Check the documentation for \texttt{read\_csv()}, and call in \texttt{"gapminder.csv"} with a character column, an integer column, a double column, and a factor column.
+2. You can also easily skip columns with this shorthand. Why do you think this be useful? Call in \texttt{"gapminder.csv"} again skipping the \texttt{Region} column.
+
+## Transform: \texttt{dplyr}
+
+The package \texttt{dplyr} includes functions that transform tibbles and data frames. 
+
+```{r}
+df <- read_csv("gapminder.csv")
+head(df)
+```
+
+### Select Variables
+The general form of functions in \texttt{dplyr} involves identifying the data frame first and then specifying the options. To demonstrate, the function \texttt{select} chooses which variables.
+```{r}
+select(tib1, country)
+```
+
+Note that the original data frame is not changed. You will have to assign an object if you want to save this selection in an object.
+```{r}
+head(tib1)
+```
+
+There are several ways to select more than one variable. The last method used a helper, \texttt{starts\_with()}. See the documentation for \texttt{select} for other helpers.
+```{r, eval = FALSE}
+select(tib1, country, gdp)
+select(tib1, gdp:gini)
+select(tib1, -gdp)
+select(tib1, -c(country, gini))
+select(tib1, starts_with("g"))
+```
+
+Sometimes it is desirable to rename variables when selecting them. This is very convenient in \texttt{select}!
+```{r}
+select(tib1, country_name = country)
+select(tib1, var = starts_with("g"))
+```
+
+### Rename and Create Variables
+If you want to rename variables without dropping any, use the function \texttt{rename}.
+```{r}
+rename(tib1, country_name = country)
+rename(tib1, country_name = country, gdp_percapita = gdp)
+```
+
+
+The function \texttt{mutate()} allows for new variables to be added to the data frame or existing variables to be modified without changing the other variables.
+```{r}
+mutate(tib1, gdp_sq = gdp^2)
+mutate(tib1, row_id = 1:length(country))
+mutate(tib1, gdp_large = ifelse(gdp >= 25000, TRUE, FALSE))
+```
+
+
+If you want to create a new variable and drop the other variables, use the function \texttt{transmute()}.
+```{r}
+transmute(tib1, gini_small = ifelse(gini <= 40, TRUE, FALSE))
+```
+
+
+### Filter Observations
+
+The function \texttt{select} allows you to choose which variables (columns) are included in your data. The function \texttt{filter} allows you choose which observations (rows) are included in your data.
+
+```{r}
+filter(tib1, region == "North America")
+filter(tib1, is.na(gdp))
+filter(tib1, gdp > 25000 & region != "Europe")
+filter(tib1, region %in% c("North America", "Middle east"))
+```
+
+To select rows based on the number index, use \texttt{slice}.
+```{r}
+slice(tib1, 32:37)
+```
+
+The function \texttt{distinct()} filters out duplicated rows.
+```{r} 
+distinct(tib1)
+filter(tib1, duplicated(tib1)) # Check which observations are duplicated
+```
+
+The function \texttt{slice\_sample()} randomly selects rows.
+```{r}
+slice_sample(tib1, n = 4)
+slice_sample(tib1, prop = 0.03)
+```
+
+### Organize 
+
+The functions so far produce data frames that explicitly differ from the inputted data frame. There are some silent functions that change the underlying structure without changing the outputted data frame. The function \texttt{group\_by()} is an example of these silent functions. It groups the data based on the values of a set of variables. It makes most sense to group by categorical variables. The only difference is that now it says \texttt{Groups: region [7]}.
+```{r}
+group_tib1 <- group_by(tib1, region)
+group_tib1
+```
+
+Ungrouping the data is another silent function and it removes this underlying grouping.
+```{r}
+ungroup(group_tib1)
+```
+
+The function \texttt{arrange} sorts the data based on the rank order of a set of variables. Adding \texttt{desc()} changes the rank-order to descending.
+```{r}
+arrange(tib1, gini)
+arrange(tib1, desc(region), gini)
+```
+
+### Merge
+
+Merging data frames is useful when there are several data frames with similar observations but different variables. To demonstrate the join functions in \texttt{dplyr}, we have two datasets. One is the population of all countries and the other is the population of all countries that begin with "A." Neither of these datasets have duplicates.
+```{r}
+pop <- read_csv("population.csv")
+popA <- read_csv("population_A.csv")
+```
+
+The different join functions relate to which observations are kept. In \texttt{full\_join()}, all observations in the two data frames are kept, even if there are unmatched observations. The argument \texttt{by} indicates which variable on which to match.
+```{r}
+full_join(tib1, pop, by = "country")
+```
+
+The function \texttt{inner\_join()} only keeps observations that are present in both data frames. In this case, that is only countries that begin with "A."
+```{r}
+inner_join(tib1, popA, by = "country")
+```
+
+The function \texttt{left\_join()} only keeps from the data frame in the left argument (\texttt{tib1} in this case).
+```{r}
+left_join(tib1, popA, by = "country")
+```
+
+The function \texttt{right\_join()} is the same except it only keeps the observations from the data frame in the right argument.
+```{r}
+right_join(tib1, popA, by = "country")
+```
+
+The function \texttt{semi\_join()} keeps all rows in \texttt{tib1} that have a match in \texttt{popA}.
+```{r}
+semi_join(tib1, popA, by = "country")
+```
+
+The function \texttt{anti\_join()} keeps all rows in \texttt{tib1} that do not have a match in \texttt{popA}.
+```{r}
+anti_join(tib1, popA, by = "country")
+```
+
+
+### Practice Exercises 5.2
+1. Before running this code, what do you think the output will be? Check to see if you were right!
+```{r, eval = FALSE}
+anti_join(popA, tib1, by = "country")
+```
+
+
+## Reshape: \texttt{tidyr}
+
+The \texttt{tidyr} package provides an efficient way to reshape and reformat data. 
+
+```{r}
+tib1 <- read_csv("gapminder_large.csv")
+head(tib1)
+```
+
+Wide data have one row per unit while long data have more than one row per unit. To convert wide data to long, use \texttt{pivot\_longer()}. There are several different ways to get the same output.
+```{r}
+# Select columns using tidy-select
+# Dictate pattern with names_sep
+long_tib1 <- pivot_longer(tib1,
+                       contains("_"),
+                       names_to = c("var", "year"),
+                       names_sep = "_")
+
+# Select columns using column indices
+pivot_longer(tib1,
+             5:21,
+             names_to = c("var", "year"),
+             names_sep = "_")
+
+# Dictate pattern with names_pattern
+pivot_longer(tib1,
+             5:21,
+             names_to = c("var", "year"),
+             names_pattern = "(.*)_(.*)")
+
+```
+
+To go from long data to wide, use \texttt{pivot\_wider}. There are several options to dictate the names of the newly created variables.
+```{r}
+wide_tib1 <- pivot_wider(long_tib1,
+                      names_from = c("var", "year"),
+                      values_from = "value")
+head(wide_tib1)
+pivot_wider(long_tib1,
+            names_from = c("var", "year"),
+            values_from = "value",
+            names_sep = ".")
+```
+
+It might be useful to reference [this chapter on strings and regular expressions](https://r4ds.had.co.nz/strings.html). There are many ways to represent different patterns in character strings, and a standardized approach exists to minimize the need to type out everything explicitly.
+
+# Pipes
+
+The \texttt{magrittr} package contains the pipe operator, \texttt{\%>\%}. The purpose of this operator is to make code clearer and more efficient. The idea is to minimize unnecessary saved objects. For example, if you are cleaning a dataset, it would be cumbersome to save a new data frame for each step in the cleaning process. Pipe operators, or pipes, help with this.
+
+The idea is that the pipe forwards a value to the next function. The two lines result in the same output. The first argument of \texttt{filter()} is forwarded by the pipe operator.
+```{r}
+filter(tib1, region == "North America")
+tib1 %>% filter(region == "North America")
+```
+
+Pipe operators are especially useful when there are several operations being applied to the same object.
+```{r}
+tib1 %>%
+  distinct() %>%
+  full_join(pop, by = "country") %>%
+  arrange(desc(region), desc(population)) %>%
+  head()
+```
+
+To highlight the utility of pipe operators, consider these alternatives. They produce the same results. The first approach results in two objects that are not necessary for the final analysis, \texttt{tmp1} and \texttt{tmp2}. These objects are created with the sole purpose of being used in other functions. If the dataset is large, saving different versions of it can be burdensome. Additionally, the workspace becomes messy with so many temporary objects. While the second approach avoids temporary versions, it is difficult to read and understand. 
+```{r}
+tmp1 <- distinct(tib1)
+tmp2 <- full_join(tmp1, pop, by = "country")
+df <- arrange(tmp2, desc(region), desc(population))
+head(df)
+
+head(arrange(distinct(full_join(tib1, pop, by = "country")), desc(region), desc(population)))
+```
+
+Note that the pipe operator can be used with functions outside of the \texttt{tidyverse} functions. 
+```{r}
+full_join(df, pop, by = "country") %>%
+  write.csv("country_info.csv")
+```
+
+
+Pipe operators can forward objects to other arguments besides the first one. A period (\texttt{.}) indicates this. Here is an example with plotting (see chapter 5).
+```{r}
+tib1 %>%
+  distinct() %>%
+  full_join(pop, by = "country") %>%
+  qplot(x = gini_2015, data = .)
+```
+
+Getting comfortable with \texttt{\%>\%} can vastly smooth your workflow in R. 
+
+## Practice Exercises 5.3
+1. Use pipes to accomplish the following tasks on \texttt{tib1}: select \texttt{country}, \texttt{region}, \texttt{co2\_2015}, and \texttt{co2\_2016}, remove rows with missing values for either CO2 variables, create a variable that is \texttt{TRUE} when CO2 emissions in 2016 are smaller than those in 2015, and only keep the rows where this variable is \texttt{TRUE}.
+2. Look at the documentation for \texttt{?magrittr}. There are four types of pipes. Take a moment to familiarize yourself with their differences. 
+
+# Further Reading
+There are many great resources online, including cheat sheets. [Here](https://www.maths.usyd.edu.au/u/UG/SM/STAT3022/r/current/Misc/data-transformation.pdf) is one for \texttt{dplyr}. Save this cheat sheet if you find it useful! More cheat sheets can be found [here](https://www.rstudio.com/resources/cheatsheets/).
+
+The above information comes from chapters 5.1-5.3, 6, and 21 of @boehmke_data_2016, chapters 2.2.5 and 3 of @zamora_saiz_introduction_2020. See @zamora_saiz_introduction_2020 chapter 3 for information on \texttt{data.table}.
+
+## References

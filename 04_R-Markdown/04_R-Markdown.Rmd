@@ -1,0 +1,345 @@
+---
+title: "R Markdown"
+subtitle: "Chapter 4"
+author: "Anna Ziff"
+date: "R Workflow for Economists"
+thanks: "Please contact anna.ziff@duke.edu if there are errors."
+output: pdf_document
+bibliography: ../R-for-Economists.bib
+header-includes:
+    - \usepackage{fancyhdr}
+    - \usepackage{hyperref}
+    - \pagestyle{fancy}
+    - \fancyfoot[R]{Anna Ziff}
+    - \fancyfoot[L]{\today}
+    - \fancyhead[R, C, L]{}
+    - \renewcommand{\headrulewidth}{0pt}
+urlcolor: blue
+---
+
+\tableofcontents
+\clearpage
+
+# Overview
+R Markdown is a document format that allows for R code to be embedded in documents. Because R is based on Markdown, a simple, plain text formatting syntax, it is easy to learn and use. The downside of R Markdown is that you may be more limited in document formatting options than if you used something like LaTeX. For this reason, R Markdown may not be appropriate for writing academic articles in most cases. Regardless, it is a great tool whenever you want to formally communicate with integrated R code. For demonstration, the class materials are written in R Markdown.
+
+R Markdown can produce a multitude of outputs including document (PDF, HTML, Word), presentations (Beamer, PowerPoint), interactive applications (Shiny), and websites. These notes will just focus on what is needed to produce a document. @xie_r_2020 cover the other types of outputs.
+
+Even when just considering document outputs, R Markdown is great for 
+
+* code documentation or demonstration (including these chapters);
+
+* notes and memos;
+
+* homework assignments.
+
+## Prerequisites
+
+Make sure you have the \texttt{rmarkdown} package installed.
+```{r eval = FALSE}
+require("rmarkdown")
+```
+
+It is most convenient to use RStudio to write and compile documents in R Markdown. If you do not want to use RStudio, install the \texttt{pandoc} package. 
+
+To output to PDFs, you will also need to have LaTeX installed on your computer. An alternative is to install the \texttt{tinytex} package. This is not necessary for document output, as you can output to HTML or Word. If you want PDFs that have similar formatting as LaTeX documents, then either LaTeX or \texttt{tinytex} will be necessary.
+```{r eval = FALSE}
+require("tinytex")
+```
+
+## First Document
+An R Markdown document is a plain text file with the \texttt{.Rmd} file extension. Create a new R Markdown document in RStudio with \texttt{File > New File > R Markdown}. Click on \texttt{Create Empty Document} in the bottom left corner.
+
+The metadata is written at the top of the document between a pair of three hyphens. The syntax of metadata is YAML (YAML Ain't Markup Language). Write this simple header in your empty document. Indentation matters in YAML, so make sure to copy the below exactly. Save your script with whatever name you would like.
+```yaml
+---
+title: "Learning R Markdown"
+author: "My Name"
+date: "July 1, 2021"
+output: html_document
+---
+```
+
+Type \texttt{?html\_document} in your console. You will see a list of options that control the formatting and elements of the document. You can input these options into YAML using the following format. Take note of the indentation.
+```yaml
+output: 
+  html_document:
+    toc: true 
+    toc_depth: 2
+    dev: "jpg"
+```
+
+The body for the document comes after the metadata and is a mix of text and code. Text is written in Markdown. Computer code is inserted in \textit{code chunks} or inline expressions. Add this example below to your script. Note the use of backticks.
+
+```{r include=FALSE}
+avgmpg = '`r avgmpg`'
+```
+
+````markdown
+This is a paragraph in an R Markdown document.
+
+This is an example of a code chunk:
+
+`r ''````{r}
+avgmpg <- mean(mtcars$mpg)
+hist(mtcars$mpg)
+```
+This is an example of inline R code. The average MPG is `r avgmpg`.
+````
+
+To compile, click the \texttt{Knit} button. Even if you have defined objects in your environment, the knitting occurs in a new R session. This ensures that the R Markdown document has everything it needs to compile, regardless of the current environment.
+
+
+# Markdown
+Markdown is a syntax that allows for simple text formatting. It is widely used, not just in R Markdown, and a passing familiarity with it can be useful. If you are already familiar with Markdown, the specific syntax that R Markdown uses is based on that of Pandoc.
+
+## Text 
+
+Basic text formatting, including italic, bold, subscript, and superscript are done as follows. Practice inserting these into your document and knit.
+```markdown
+_italic text_
+```
+_italic text_
+```markdown
+*also italic text*
+```
+*also italic text*
+```markdown
+**bold text**
+```
+**bold text**
+```markdown
+text~subscript~
+```
+text~subscript~
+```markdown
+text^superscript^
+```
+text^superscript^
+
+Linking to external websites or footnotes is done as follows.
+```markdown
+[clickable link](https://bookdown.org/yihui/rmarkdown/)
+```
+[clickable link](https://bookdown.org/yihui/rmarkdown/)
+```markdown
+example^[footnote]
+```
+example^[footnote]
+
+Headers are denoted with pound signs. Try adding these to your document and knit. If you set the \texttt{toc} option to \texttt{true}, you will see a table of contents at the top of the document.
+
+```markdown
+# Header 1
+
+## Header 2
+
+### Header 3
+```
+
+Use \texttt{*}, \texttt{-}, or \texttt{+} to create unordered lists. Indentation allows for nested lists.
+```markdown
+* red
+- blue
+  + navy
+  + indigo
+```
+* red
+- blue
+  + navy
+  + indigo
+
+Ordered lists have numbers and can also be nested.
+```markdown
+1. red
+2. blue
+```
+1. red
+2. blue
+
+The \texttt{>} symbol allows for blockquotes. These are block of texts set apart from the narrative text.
+```markdown
+> I never have considered myself a perfectionist, 
+> but I do think of myself as a "professionalist"...
+> I always strive simply to be my very best.
+> --- Dolly Parton
+```
+> I never have considered myself a perfectionist, 
+> but I do think of myself as a "professionalist"...
+> I always strive simply to be my very best.
+> --- Dolly Parton
+
+Verbatim text is not formatted.
+````markdown
+```
+plain text **this is not bold**
+```
+````
+```
+plain text **this is not bold**
+```
+
+## Math
+Math expressions are inserted using LaTeX syntax. Inline math is inserted with a pair of single dollar signs \texttt{\$}.
+
+```markdown
+Here is an inline math expression: $\sqrt{4} = \pm 2$
+```
+Here is an inline math expression: $\sqrt{4} = \pm 2$
+
+Equations are inserted with a pair of double dollar signs \texttt{\$\$}.
+
+```markdown
+$$\frac{1}{\sigma \sqrt{2\pi}} 
+\exp\left\{ \frac{-1}{2} \left( \frac{x-\mu}{\sigma} \right)^2\right\}$$
+```
+$$\frac{1}{\sigma \sqrt{2\pi}} \exp\left\{ \frac{-1}{2} \left( \frac{x-\mu}{\sigma} \right)^2\right\}$$
+
+
+## Code
+
+R Markdown integrates R code not just to show the commands but to also print the results and output of the code. Options are available to control how the code is evaluated and how the output is displayed. Code chunks format the code and output to be separate from the narrative text. Inline code is integrated into the narrative text.
+
+### Code Chunks
+
+It is the default for R Markdown to evaluate the code chunk. To suppress evaluation, set \texttt{eval = FALSE}. If \texttt{rnorm(10)} were evaluated, then the output would be 10 values randomly drawn from the standard normal distribution. It is useful to suppress evaluation when you simply want to show a command or step in your code but the evaluation of it is not necessary in the remaining code chunks. Evaluation is necessary if you define an object or load a package that is used in later code chunks.
+````markdown
+`r ''````{r, eval = FALSE}
+x <- rnorm(10)
+x
+```
+````
+
+If you need the code chunk to be evaluated but do not want to display the output, set \texttt{results = "hide"}. Even though the results are not displayed, the workspace includes the object \texttt{x} and the document will include the code. The default is for the output to be displayed in plain code blocks (i.e., the output is not formatted using Markdown).
+````markdown
+`r ''````{r, results = "hide"}
+x <- rnorm(10)
+x
+```
+````
+
+You might aesthetically prefer to have the output formatted in the same area as the code. Setting \texttt{collapse = TRUE} achieves this. The default is \texttt{collapse = FALSE}.
+````markdown
+`r ''````{r, collapse = TRUE}
+x <- rnorm(10)
+x
+```
+````
+
+This is what the collapsed output looks like.
+```{r, collapse = TRUE}
+x <- rnorm(10)
+x
+```
+
+R prints warnings, messages, and errors for some commands. You can control which of these messages are printed from your code chunk. The default is for warnings and messages to be displayed (\texttt{warning = TRUE} and \texttt{message = TRUE}) and errors to be supressed (\texttt{error = FALSE}). If \texttt{error = FALSE}, then the document will not be compiled if there is an error. Compare the two code chunks below to see the difference.
+````markdown
+`r ''````{r, message = FALSE}
+matrix(1:4, nrow = 5, ncol = 1) # No warning printed
+```
+````
+```{r, warning = FALSE, echo = FALSE}
+matrix(1:4, nrow = 5, ncol = 1) # No warning printed
+```
+````markdown
+`r ''````{r}
+matrix(1:4, nrow = 5, ncol = 1) # Warning printed by default
+```
+````
+```{r, echo = FALSE}
+matrix(1:4, nrow = 5, ncol = 1) # Warning printed by default
+```
+
+If you want to only display the result but hide the code itself, set \texttt{echo = FALSE}. Insert this code chunk in your code and knit to see the difference from the default of displaying the code. 
+````markdown
+`r ''````{r, echo = FALSE}
+rnorm(10)
+```
+````
+
+Suppose you do not want to display the code (\texttt{echo = FALSE}), the results  (\texttt{results = "hide"}), nor warnings and messages  (\texttt{warning = FALSE} and \texttt{message = FALSE}), but you still want to evaluate the code (\texttt{eval = TRUE}). It is possible to combine these options in a single chunk, with each option separated with a comma.
+````markdown
+`r ''````{r, echo = FALSE, results = "hide", warning = FALSE, message = FALSE, eval = TRUE}
+matrix(1:4, nrow = 5, ncol = 1) 
+```
+````
+A more concise alternative is to set \texttt{include = FALSE}. This will still evaluate the code chunk but will not display the code, results, warnings, or messages.
+````markdown
+`r ''````{r, include = FALSE}
+matrix(1:4, nrow = 5, ncol = 1) 
+```
+````
+
+You can name your chunks with alphanumeric characters (\texttt{a-z}, \texttt{A-Z}, \texttt{0-9}) and dashes (\texttt{-}). This is not necessary but may be helpful if you want to find a particular code chunk quickly.
+````markdown
+`r ''````{r make-matrix, include = FALSE}
+matrix(1:4, nrow = 5, ncol = 1) 
+```
+````
+
+You can set the options for the entire document at the top of the document. This is useful if you want the majority of your code chunks to differ from the default output.
+````markdown
+`r ''````{r, setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+```
+````
+
+
+### Inline Code
+
+Inline code is useful to reference objects or results. Add the below example to your script and knit to test the output.
+
+````markdown
+`r ''````{r}
+x <- rnorm(100)
+```
+The mean of x is `r '\x60r mean(x)\x60'`.
+````
+
+### Figures
+
+Figures are inserted right after the code chunk creating them.
+````markdown
+`r ''````{r}
+hist(x)
+```
+````
+```{r, echo = FALSE}
+hist(x)
+```
+
+The options \texttt{fig.width}, \texttt{fig.height}, \texttt{fig.dim}, \texttt{fig.align}, \texttt{dev}, and \texttt{fig.cap} are useful for formatting figures produced in the code chunks.  
+
+````markdown
+`r ''````{r, fig.cap = "Histogram of X", fig.dim = c(6, 4)}
+hist(x)
+```
+````
+
+It is also possible to insert images not created by code chunks using the function \texttt{include\_graphics()} from the \texttt{knitr} package. 
+````markdown
+`r ''````{r, out.width = "25%", fig.align = "center", fig.cap = "Caption"}
+knitr::include_graphics("image.png")
+```
+````
+
+### Tables
+
+Output can be automatically formatted into a table using the \texttt{kable()} function from the \texttt{knitr} package.
+````markdown
+`r ''````{r}
+knitr::kable(mtcars[1:5, ], caption = "Some Cars")
+```
+````
+```{r, echo = FALSE}
+knitr::kable(mtcars[1:5, ], caption = "Some Cars")
+```
+
+
+# Further Reading
+
+The above information comes from chapters 1, 2.2, and 2.4-2.6 of @xie_r_2020. Further options to format documents may be especially relevant. These options are discussed in chapter 3. 
+
+There are many other ways R Markdown can be used. One useful capability is to write code chunks in other languages, including STATA, C, bash, Python, and many others. These are described in chapter 2.7 of @xie_r_2020. The remaining chapters of @xie_r_2020 cover using R Markdown to create interactive documents, presentations, applications, websites, books, and tutorials.
+
+# References

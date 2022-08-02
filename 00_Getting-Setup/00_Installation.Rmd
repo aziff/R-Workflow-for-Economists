@@ -1,0 +1,77 @@
+---
+title: "Installation Instructions"
+subtitle: "Chapter 0"
+author: "Anna Ziff"
+date: "R Workflow for Economists"
+thanks: "Please contact anna.ziff@duke.edu if there are errors."
+output: pdf_document
+bibliography: ../R-for-Economists.bib
+header-includes:
+    - \usepackage{fancyhdr}
+    - \usepackage{hyperref}
+    - \pagestyle{fancy}
+    - \fancyfoot[R]{Anna Ziff}
+    - \fancyfoot[L]{\today}
+    - \fancyhead[R, C, L]{}
+    - \renewcommand{\headrulewidth}{0pt}
+urlcolor: blue
+---
+
+# R
+
+\begin{enumerate}
+  \item R is available for free from the {\color{blue}{\href{https://cran.r-project.org/}{Comprehensive R Archive Network (CRAN)}}}. Go to this website.
+  \item Click the download link that corresponds to your operating system.
+  \begin{itemize}
+    \item Mac. Select the version that corresponds with the version of your operating system. Follow the installation instructions.
+    \item Windows. Click ``Base'' and download the installer. Follow the installation instructions.
+    \item Linux. Click on your distribution. Follow the installation instructions.
+  \end{itemize}
+\end{enumerate}
+
+Confirm that installation was successful by opening the R program. 
+
+# RStudio
+
+While the R application is perfectly functional on its own, it is not as convenient as other applications. Specifically, we are interested in a more user-friendly Graphical User Interface (GUI). The GUI comprises the menus available to users for point-and-click operations. RStudio is a free software with an accessible GUI. 
+
+\begin{enumerate}
+  \item Navigate to the {\color{blue}{\href{https://www.rstudio.com/products/rstudio/download/}{RStudio IDE webpage}}}.
+  \item Choose the free version of RStudio Desktop.
+  \item Select your operating system and follow the installation instructions.
+\end{enumerate}
+
+Confirm that the installation was successful by opening RStudio.
+
+# Git
+
+We will be using Git, a popular version control software. Git must be installed on your local machine, i.e., your personal computer. This class will cover the most flexible way to use Git, which is through the command line (a direct place for you to type instructions to your computer). 
+
+## Mac
+
+Mac computers should already have Git installed. You will access Git through the Terminal application (this application is how Mac users access the command line). Open Terminal and make sure you have Git installed by typing the below. It is fine if your version is different than mine.
+
+
+```{bash, eval = TRUE}
+git --version
+```
+
+If it is not installed, you will get instructions on how to install it.
+
+## Windows
+
+Machines with Windows operating systems require more setup. Git Bash allows you to use Git in the command line the same way a Mac or Linux user would. The below steps are copied from @matoso_using_2019.
+
+1. [Download](https://git-scm.com/downloads) the Git installer.
+2. Execute the file with the default options in the "Select Components" page.
+3. The option "Windows Explorer integration > Context menu entries" makes it possible to right click on a folder and open Git Bash to that folder's location.
+4. In "Adjusting your path environment" select "Use Git Bash only."
+5. Select "Checkout as-is, commit Unix-style line endings." This helps prevent compatibility issues due to different line endings with files from other operating systems.
+6. Click "Next" and then "Finish."
+
+You can also use another program like PowerShell or Command Prompt. Git Bash seems to be the preferred application.
+
+## Linux
+See page 17 of @chacon_pro_2020 for installation instructions for RPM-based and Debian-based distributions. 
+
+# References

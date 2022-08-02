@@ -1,0 +1,405 @@
+---
+title: "Summary Statistics"
+subtitle: "Chapter 8"
+author: "Anna Ziff"
+date: "R Workflow for Economists"
+thanks: "Please contact anna.ziff@duke.edu if there are errors."
+output: pdf_document
+bibliography: ../R-for-Economists.bib
+header-includes:
+    - \usepackage{fancyhdr}
+    - \usepackage{hyperref}
+    - \pagestyle{fancy}
+    - \fancyfoot[R]{Anna Ziff}
+    - \fancyfoot[L]{\today}
+    - \fancyhead[R, C, L]{}
+    - \renewcommand{\headrulewidth}{0pt}
+urlcolor: blue
+---
+
+```{r setup, include = FALSE}
+    knitr::opts_knit$set(root.dir = normalizePath("~/Desktop/Duke/projects/R-Workflow-for-Economists/Data/Gapminder")) 
+```
+
+
+\tableofcontents
+\clearpage
+
+This chapter covers statistics useful to understand and describe data that are already pre-processed. At the end of this chapter is an interactive exercise to write a function to output a table of descriptive statistics.
+
+Here are all the libraries you should install for this chapter.
+```{r eval = TRUE, warning = FALSE, message = FALSE}
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(readr)
+library(stargazer)
+library(stringr)
+library(tidyr)
+```
+
+# Built-in Functions
+
+We will use the dataset \texttt{gapminder\_large.csv} which contains measures of development, environment, and society from the countries in the world. GDP and the Gini Index are measured in 2015. The Corruption Perception Index (\texttt{cpi}) is measured between 2012 and 2017. A higher score means less corruption. Life expectancy (\texttt{lifeexp}) is measured between 2012 and 2018. It is measured in years and is the average number of years a newborn would live holding constant contemporaneous mortality patterns. C02 emissions (\texttt{co2}) is measured between 2015 and 2018. The units are metric tonnes of CO2 per person.
+```{r}
+df <- read.csv("gapminder_large.csv")
+```
+
+First, we want to get a sense of the data. How many observations are there? How many variables? What are the names of the variables and what classes are they? 
+```{r}
+head(df) # Display the first 6 rows
+dim(df) # Confirm the number of rows and columns
+names(df) # List the variable names
+sapply(df, typeof)
+```
+
+The function \texttt{mean()} calculates the arithmetic mean. Here is a simple demonstration of it with a vector of 50 draws from the N(0,1) distribution.
+```{r}
+x <- rnorm(50, mean = 0, sd = 1)
+mean(x)
+```
+
+If there are any elements of the input that are \texttt{NA}, you must specify the argument \texttt{na.rm = TRUE}. Otherwise, the result will be \texttt{NA}.
+```{r}
+mean(df$gdp_2015)
+mean(df$gdp_2015, na.rm = TRUE)
+```
+
+If you will only be using one data frame and do not want to repeatedly call variables using the format above, you can attach the data and then refer just to the variable name.
+```{r}
+attach(df)
+mean(gdp_2015, na.rm = TRUE)
+```
+
+While this is convenient, it is not always clear to which data frame the variable belongs. Also, if any variables have the same names as functions, those functions will be masked. This chapter thus relies on \texttt{data\$colname} format for clarity. Let us detach the dataset and continue.
+```{r}
+detach(df)
+```
+
+To calculate the mean for more than one column, we can use apply-like functions. Here, we are calculating the mean of every column except \texttt{country} and \texttt{region}, which are string variables.
+```{r}
+sapply(df[, -c(1, 4)], mean, na.rm = TRUE)
+```
+
+The median is calculated with a function that is very similar to the mean function.
+```{r}
+median(x)
+median(df$gini_2015, na.rm = TRUE)
+```
+
+The function \texttt{quantile()} allows you to calculate other percentiles. Without specifying the probabilities in the \texttt{probs} argument, the function automatically outputs the minimum and maximum values, and the 25th, 50th, and 75th percentiles.
+```{r}
+quantile(x)
+quantile(df$lifeexp_2015, probs = c(0.10, 0.90), na.rm = TRUE)
+```
+
+Here are some functions to calculate measures of dispersion. Note the importance of specifying \texttt{na.rm = TRUE}.
+```{r}
+min(df$co2_2015, na.rm = TRUE)
+max(df$co2_2015, na.rm = TRUE)
+range(df$co2_2015, na.rm = TRUE)
+IQR(df$co2_2015, na.rm = TRUE) 
+var(df$co2_2015, na.rm = TRUE) # Unbiased estimator
+sd(df$co2_2015, na.rm = TRUE)
+```
+
+The function \texttt{summary()} is a fast way to calculate many summary statistics at once. There is no need to add the \texttt{na.rm = TRUE} argument, and the function actually counts the number of \texttt{NA} values, if there are any. 
+```{r}
+summary(x)
+summary(df$cpi_2015)
+```
+
+The covariance and correlation coefficient are calculated using \texttt{cov()} and \texttt{corr()}. Specifying what to do with \texttt{NA} values is a little more complicated for these functions. The argument \texttt{use} determines the strategy more precisely. If \texttt{use = "pairwise.complete.obs"}, then the covariance/correlation is only calculated for observations with two non-missing values. .
+```{r}
+cov(df$gdp_2015, df$co2_2015)
+cov(df$gdp_2015, df$co2_2015, use = "pairwise.complete.obs")
+cor(df$gdp_2015, df$co2_2015, use = "pairwise.complete.obs")
+```
+
+Data frames can be input into these functions, producing pairwise correlations.
+```{r}
+cov(df[, c(2, 3, 5)], use = "pairwise.complete.obs")
+cor(df[, c(2, 3, 5)], use = "pairwise.complete.obs")
+```
+
+
+The function \texttt{t.test()} performs a t-test. The arguments augment the details of the test, including the null and alternative hypotheses.
+```{r}
+t.test(df$lifeexp_2012, mu = 72, alternative = "two.sided")
+t.test(df$lifeexp_2012, df$lifeexp_2017, paired = TRUE, var.equal = FALSE, conf.level = 0.90)
+```
+
+The function \texttt{ks.test()} performs the Kolmogorov-Smirnov Test to compare two distributions
+```{r}
+ks.test(df[df$region == "Africa", "co2_2015"],
+        df[df$region == "Middle east", "co2_2015"],
+        alternative = "two.sided")
+
+```
+
+## Practice Exercises 8.1
+1. Save the below code to an object. What is the data structure of this object? How can you extract information from this object?
+```{r, eval = FALSE}
+t.test(df$lifeexp_2012, mu = 72, alternative = "two.sided")
+```
+
+# \texttt{tidyverse} Functions
+
+The advantages of \texttt{dplyr} functions and pipes are especially clear for producing summary statistics. We read in the data as a tibble.
+```{r}
+tib <- read_csv("gapminder_large.csv")
+```
+
+The function \texttt{summarise()} allows for many types of summary statistics. The output is itself a tibble. Here are examples naming the column of the output. Note that we need to specify \texttt{na.rm = TRUE}.
+```{r}
+tib %>%
+  summarise("Mean GDP 2015" = mean(gdp_2015, na.rm = TRUE))
+tib %>%
+  summarise(MeanGDP2015 = mean(gdp_2015, na.rm = TRUE))
+```
+
+It is fine to refrain from naming the column. R automatically assigns the name based on the statistic.
+```{r}
+tib %>%
+  summarise(mean(gdp_2015, na.rm = TRUE))
+```
+
+It is possible to calculate many statistics at once.
+```{r}
+tib %>%
+  summarise(Median = median(gdp_2015, na.rm = TRUE),
+            Variance = var(gdp_2015, na.rm =TRUE),
+            SD = sd(gdp_2015, na.rm = TRUE),
+            Minimum = min(gdp_2015, na.rm = TRUE),
+            Maximum = max(gdp_2015, na.rm = TRUE),
+            N = n())
+            
+```
+
+The function \texttt{across()} can be used inside \texttt{summarise()} and \texttt{mutate()}. In the first argument, specify the vector of column names or indices. In the second argument, specify the function(s) to apply. The format comes from the package \texttt{purrr} and allows you to specify the values of the other arguments of the function. 
+```{r}
+tib %>%
+  summarise(across(c(2, 3, 5), ~ mean(.x, na.rm = TRUE)))
+tib %>%
+  summarise(across(starts_with("co2"), ~ median(.x, na.rm = TRUE)),
+            across(starts_with("lifeexp"), ~ median(.x, na.rm = TRUE)))
+tib %>%
+  summarise(across(c(2, 3, 5), list(mean = ~ mean(.x, na.rm = TRUE),
+                                    median = ~ median(.x, na.rm = TRUE))))
+```
+
+Now that we are comfortable with \texttt{summarise()}, let's add layers using the pipe operator. Adding \texttt{group\_by()} beforehand allows for this. 
+```{r}
+tib %>%
+  group_by(region) %>%
+  summarise(MeanGINI = mean(gini_2015, na.rm = TRUE),
+            N = n(),
+            N_NA = sum(is.na(gini_2015)))
+```
+
+We can also filter to only focus on certain observations.
+```{r}
+tib %>%
+  filter(region %in% c("Africa", "Middle east")) %>%
+  group_by(region) %>%
+  summarise(Mean_Gini = mean(gini_2015),
+            SD_Gini = sd(gini_2015))
+```
+
+The data itself can be transformed in the pipe operations. Here, we are creating a variable that is then summarized. 
+```{r}
+tib %>%
+  mutate(gini_rescaled = gini_2015/100) %>%
+  group_by(region) %>%
+  summarise(InterQuartileRange = IQR(gini_rescaled))
+```
+
+# Tables 
+
+## Creating Tables with \texttt{stargazer}
+
+The package \texttt{stargazer} provides a simple way to output summary statistics from data frames. The simplest way to use the \texttt{stargazer()} function is to input a data frame. By default, it will return the LaTeX code for a table with summary statistics for all numeric variables. The default statistics are the number of observations, the mean, the standard deviation, the minimum, the 25th percentile, the 75th percentile, and the maximum.
+```{r}
+head(df)
+stargazer(df)
+```
+
+
+Inputting a selected set of variables will restrict the table.
+```{r}
+stargazer(df[, 5:8])
+```
+
+There are many options to alter the output. Here are a few examples. See \texttt{?stargazer} and [this document](https://cran.r-project.org/web/packages/stargazer/vignettes/stargazer.pdf) for more examples.
+```{r}
+stargazer(df[, 5:8], title = "CO2 Emissions")
+stargazer(df[, 5:8], float = FALSE)
+stargazer(df[, 5:8], out = "table1.tex")
+stargazer(df[, 5:8], summary.stat = c("n", "mean", "sd"))
+stargazer(df[, 5:8], flip = TRUE)
+```
+
+
+## Creating Tables from Scratch
+These exercises will take you through creating a function that outputs a table of summary statistics for inclusion in a LaTeX document.
+
+
+1. This function will take a tibble of summary statistics as an input. Create a tibble that lists, for each region, the mean, standard deviation, minimum, maximum, and number of non-missing observations for 2015 life expectancy. Save this tibble to an object so you can access it.
+```{r, eval = FALSE}
+gapminder <- read_csv("gapminder_large.csv")
+out <- gapminder %>%
+  group_by(region) %>%
+  summarise(mean(lifeexp_2015, na.rm = TRUE),
+            sd(lifeexp_2015, na.rm = TRUE),
+            min(lifeexp_2015, na.rm = TRUE),
+            max(lifeexp_2015, na.rm = TRUE),
+            sum(!is.na(lifeexp_2015)))
+
+```
+
+2. Define the name of your function. The first argument will be a tibble like the one you produced in question 1. 
+```{r, eval = FALSE}
+create_table <- function(tib) {
+  
+  # Open file connection
+  # Define header lines
+  # Define body lines
+  # Define footer lines
+  # Write header, body, and footer lines
+  # Close file connection
+  
+}
+```
+
+3. We want to write an output to a LaTeX file. This will require a file connection. That is, you will open a file with a certain file name, write lines from the tibble of question 1, and close the file. The second argument will be the filename. A file connection is opened and closed with the following commands. 
+```{r, eval = FALSE}
+connection <- file(filename) # Open a file
+close(connection)
+````
+Add these to your function and include an argument for the filename.
+```{r, eval = FALSE}
+create_table <- function(tib, filename) {
+  
+  # Open file connection
+  connection <- file(filename)
+  
+  # Define header lines
+  # Define body lines
+  # Define footer lines
+  # Write header, body, and footer lines
+  
+  # Close file connection
+  close(connection)
+  
+}
+```
+
+4. Tables in LaTeX require a header and footer to open and close the tabular environment. Start by defining the footer as this is simplest. Add the following object to your function in between opening and closing the file connection. Why do we use two backslashes instead of one?
+```{r, eval = FALSE}
+create_table <- function(tib, filename) {
+  # Open file connection
+  connection <- file(filename)
+  
+  # Define header lines
+  # Define body lines
+  
+  # Define footer lines
+  foot <- c("\\bottomrule", "\\end{tabular}")
+  
+  # Write header, body, and footer lines
+  
+  # Close file connection
+  close(connection)
+  
+}
+```
+
+5. To actually write a line in the file, we will use the function \texttt{writeLines()}. Add this to your function. Start by writing the footer to the file. At this point, test the function out to see how the \texttt{writeLines()} function works.
+```{r, eval = FALSE}
+create_table <- function(tib, filename) {
+  # Open file connection
+  connection <- file(filename)
+  
+  # Define header lines
+  # Define body lines
+  
+  # Define footer lines
+  foot <- c("\\bottomrule", "\\end{tabular}")
+  
+  # Write header, body, and footer lines
+  writeLines(foot, connection)
+  
+  # Close file connection
+  close(connection)
+  
+}
+create_table(out, "test.tex")
+```
+
+
+6. Now let's define the header. We need to begin the tabular environment, the title columns, and the alignment of the columns. The names of the columns will be the third argument. Let's start with all centrally aligned columns. Add the header to the \texttt{writeLines()} function. We have a tibble with 1 column for the region and 5 columns for summary statistics. What does your file look like now? Make adjustments if there are some oddities.
+```{r, eval = FALSE}
+create_table <- function(tib, filename, colnames) {
+  # Open file connection
+  connection <- file(filename)
+  
+  # Define header lines
+  head <- c(paste0("\\begin{tabular}{", str_dup("c", dim(tib)[2]), "}"),
+            "\\toprule",
+            paste(str_c(colnames, collapse = " & "), "\\\\"),
+            "\\midrule")
+  
+  # Define body lines
+  
+  # Define footer lines
+  foot <- c("\\bottomrule", "\\end{tabular}")
+  
+  # Write header, body, and footer lines
+  writeLines(c(head, foot), connection)
+  
+  # Close file connection
+  close(connection)
+  
+}
+create_table(out, "test.tex", c("Region", "Mean", "SD", "Min.", "Max.", "N"))
+```
+
+7. Finally, loop through each row in the tibble to print each line.
+```{r, eval = FALSE}
+create_table <- function(tib, filename, colnames) {
+  # Open file connection
+  connection <- file(filename)
+  
+  # Define header lines
+  head <- c(paste0("\\begin{tabular}{", str_dup("c", dim(tib)[2]), "}"),
+            "\\toprule",
+            paste(str_c(colnames, collapse = " & "), "\\\\"),
+            "\\midrule")
+  
+  # Define body lines
+  for (i in 1:dim(tib)[1]) {
+    
+    if (i == 1) {
+      body <- paste(str_c(tib[i, ], collapse = " & "), "\\\\")
+    } else {
+      body <- c(body, paste(str_c(tib[i, ], collapse = " & "), "\\\\"))
+    }
+    
+  }
+  
+  # Define footer lines
+  foot <- c("\\bottomrule", "\\end{tabular}")
+  
+  # Write header, body, and footer lines
+  writeLines(c(head, foot), connection)
+  
+  # Close file connection
+  close(connection)
+  
+}
+create_table(out, "test.tex", c("Region", "Mean", "SD", "Min.", "Max.", "N"))
+```
+
+# Further Reading
+
+Reference the [dplyr cheat sheet](https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf). Higher-order moments are available in the \texttt{moments} package. 

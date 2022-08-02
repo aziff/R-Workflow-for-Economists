@@ -1,0 +1,796 @@
+---
+title: "R Basics"
+subtitle: "Chapter 2"
+author: "Anna Ziff"
+date: "R Workflow for Economists"
+thanks: "Please contact anna.ziff@duke.edu if there are errors."
+output: pdf_document
+bibliography: ../R-for-Economists.bib
+header-includes:
+    - \usepackage{fancyhdr}
+    - \usepackage{hyperref}
+    - \pagestyle{fancy}
+    - \fancyfoot[R]{Anna Ziff}
+    - \fancyfoot[L]{\today}
+    - \fancyhead[R, C, L]{}
+    - \renewcommand{\headrulewidth}{0pt}
+urlcolor: blue
+---
+
+
+\tableofcontents
+\clearpage
+
+# Basic Operations
+
+Basic operations allow R to be used as a calculator and are building blocks for more complex calculations. Recall that any text after \texttt{\#} is a comment and R does not evaluate it. 
+
+```{r eval = TRUE}
+6 / (1 + 1) * 2.5 - 15
+10 %/% 3 # Integer division
+10 %% 3 # Remainder
+2^10 # Alternatively, 2 ** 10
+27^(1 / 3)
+```
+
+R has two values for undefined operations: \texttt{NaN} (not a number) and  \texttt{Inf} (infinity).
+```{r eval = TRUE}
+0 / 0
+pi / 0
+-pi / 0
+Inf - Inf
+```
+
+## Practice Exercises 2.1
+1. The formula to convert fahrenheit ($f$) to celsius ($c$) is $(f - 32)\frac{5}{9} = c$. Convert 60 degrees fahrenheit to celsius.
+2. Is 7,865,695,837 divisible by 3?
+
+# Basic Functions and Assignment
+
+Functions in R are comprised of a name and arguments. They generally, but do not have to, output a value. 
+
+```{r eval = TRUE}
+abs(-3)
+sqrt(4)
+factorial(10)
+exp(10)
+cos(pi)
+log(1)
+round(2.7)
+ceiling(2.7)
+floor(2.7)
+```
+
+Functions can have more than one argument. The value of the argument is specified with \texttt{=}. Required arguments do not need to follow the \texttt{argument name = argument value} format, although they can. 
+```{r eval = TRUE}
+log(3, base = 10)
+round(0.183104, digits = 3)
+```
+
+Recall from chapter 0 that the documentation for functions is readily available from the command line. Online searches can help bolster this information with troubleshooting and examples. 
+
+```{r eval = TRUE}
+?date # Alternatively help(date)
+date()
+```
+
+Typing the function without \texttt{()} will show the function's code. This is useful if you want to see exactly what a function does. The actual substance of the function \texttt{factorial()} is \texttt{gamma(x + 1)}. The \texttt{<bytecode:... >} is where the function is stored and \texttt{<environment:...>} is the package that defines that function.
+```{r eval = TRUE}
+factorial
+```
+
+The symbol \texttt{<-} is called the assignment arrow. This is used to define the values of objects. The first line assigns the variable \texttt{x} to have value 1 (assignment). The second line displays the value of \texttt{x} (evaluation).
+
+```{r eval = TRUE}
+x <- 1 
+x
+```
+
+It used to be the case that \texttt{=} could not be used for assignment. This changed in 2001 and \texttt{=} can be used for assignment in most cases. However, it is most general and best practice to only use \texttt{<-} for assignment and \texttt{=} to specify values for arguments of functions.
+
+Another detail of the assignment arrow is that it can clarify the direction of assignment. That is, \texttt{<-} or \texttt{->}. Usually, it will make sense to only use the \texttt{<-} assignment arrow.
+```{r eval = TRUE}
+2 -> x
+x
+```
+
+Finally, you may rarely see the use of \texttt{<<-} and \texttt{->>}. These uncommon assignment arrows are used to assign values to global variables. That is, those objects that retain their value regardless of what is happening in the code (loops, functions, etc.). You should practice using \texttt{<-} for assignment and \texttt{=} when specifying the values of arguments.
+
+There are some basic requirements for variable names (Workflow chapter 3 has more details on stylistic conventions).
+\begin{itemize}
+\item Variable names are case-sensitive. 
+\item Variable names may contain letters (\texttt{a-z}, \texttt{A-Z}), numbers (\texttt{0-9}), periods (\texttt{.}), and underscores (\texttt{\_}).
+\item Variable names may not contain spaces, hyphens, start with a number, or be the same as functions, operations, and instructions unless the name is in quotation marks (not recommended).
+\end{itemize}
+
+## Practice Exercises 2.2
+
+1. Do all of these lines give the same result? Why or why not?
+```{r eval = FALSE} 
+log(3, base = 10)
+log(x = 3, base = 10)
+log(base = 10, x = 3)
+log(3, 10)
+log(10, 3)
+```
+2. Functions can be nested, i.e., the outputs of functions can be the inputs of other functions. Calculate $\ln(3!)$.
+3. Define a variable \texttt{x} to take the value 10. Then, try the following code exactly as it is written. Why do you get an error? Fix the code.
+```{r eval = FALSE}
+X^2
+```
+
+
+# Types
+
+Variables can take non-numeric values. You may have noticed above that we did not specify that we were defining numeric variables above. Unlike other programming languages, R recognizes the type automatically. \textbf{The core types are numeric (integer, double), complex, logical, character string, and binary.}
+
+## Numeric
+There are two numeric types, integers and doubles (double precision floating point numbers). Integers can only contain integers, as the name suggests. The integer type requires less memory than the double type.
+
+R will automatically cast numeric objects as doubles.
+```{r eval = TRUE}
+v <- 10 
+typeof(v)
+w <- 2.5
+typeof(w)
+```
+
+You can change doubles to integers using the \texttt{as.integer()} function.
+```{r eval = TRUE}
+x <- as.integer(v)
+typeof(x)
+```
+
+You can also add \texttt{L} to the end of integers to signal that R should cast these objects as integers.
+```{r eval = TRUE}
+y <- 2L
+y
+typeof(y)
+```
+
+Just as the function \texttt{as.integer()} converts a double to an integer, \texttt{as.double()} converts an integer to a double.
+```{r eval = TRUE}
+z <- as.double(y)
+z
+typeof(z)
+```
+
+## Complex
+Complex numbers have real and imaginary components. 
+```{r eval = TRUE}
+x <- 1 + 2i
+typeof(x)
+Re(x) # Returns real component of x
+Im(x) # Returns imaginary component of x
+```
+
+## Logical
+The logical (or boolean) type takes two values: \texttt{TRUE} or \texttt{FALSE}. The abbreviations \texttt{T} and \texttt{F} can also be used, but it is best practice to use \texttt{TRUE} and \texttt{FALSE}. The logical type will result from a logical operation. Logical operators include: \texttt{>, >=, <, <=, ==, !=}.
+
+```{r eval = TRUE}
+a <- 10.5
+b <- 3
+b > a
+a == b
+is.numeric(a)
+is.integer(b)
+is.double(b)
+is.complex(x)
+f <- TRUE
+is.logical(f)
+```
+
+The value \texttt{TRUE} corresponds to the numeric value 1 and the value \texttt{FALSE} corresponds to the numeric value 0. This makes it easy to check for the number of elements in a structure with more than one element (a vector of length 5 in this example) that are \texttt{TRUE}. More information on vectors is below.
+```{r eval = TRUE}
+a <- c(1, 4, 0, 12, 21)
+b <- 1:5
+sum(a > b)
+a > b
+```
+
+### Missing Values
+A missing value is denoted \texttt{NA} (not available). Technically, it is a logical value rather than a separate data type. 
+```{r eval = TRUE}
+x <- NA
+is.na(x)
+x + 3
+```
+
+The values \texttt{Inf} and \texttt{NaN} often gets confused with \texttt{NA}. Recall that \texttt{Inf} is infinity and \texttt{NaN} is "not a number" (the output of an undefined function). 
+```{r eval = TRUE}
+y <- 0 / 0
+is.nan(y)
+is.finite(y)
+is.infinite(y)
+is.na(y)
+```
+
+## Character Strings
+Character strings are information between quotation marks. If the character string contains only numbers, it can be converted to a numeric type. Single and double quotations are interchangeable, but there is an official stylistic preference for double quotations (see \texttt{?Quotes}). Whichever you decide to use, make sure you are consistent!
+```{r eval = TRUE}
+hw <-"Hello World!"
+typeof(hw)
+is.character(hw)
+x <- "10.3"
+as.numeric(x)
+```
+
+The function \texttt{paste()} creates and concatenates (combines) character strings in a multitude of situations. 
+```{r eval = TRUE}
+paste(hw, 7)
+paste("Number", 3.5)
+```
+
+The argument \texttt{sep} specifies if there should be a character separating the inputs. Note the difference between these two lines.
+```{r}
+paste("I", "live", "in", "Wonderland")
+paste("I", "live", "in", "Wonderland", sep = "! ")
+```
+
+The function \texttt{paste()} can also be applied to data structures with more than one element.
+```{r}
+1:5
+paste("Class", 1:5, sep = " #")
+```
+The function \texttt{paste0()} does the same as \texttt{paste()} but without spaces.
+```{r eval = TRUE}
+paste0("All", "one", "word")
+```
+
+The function \texttt{as.character()} converts objects to character strings. The function \texttt{toString()} produces a single character string from several objects.
+```{r eval = TRUE}
+as.character(c("June", 29, 2021))
+toString(c("June", 29, 2021))
+```
+
+Data are frequently in character string format. Character strings can also be useful to print directly to the console or a file. 
+```{r eval = TRUE}
+print(hw)
+noquote(hw) # Alternatively, print(hw, quote = FALSE)
+```
+
+The function \texttt{sprintf()} comes from C and allows for additional formatting. Strings are substituted wherever there is \texttt{\%s}.
+```{r eval = TRUE}
+a <- "elephants"
+sprintf("My favorite animals are %s.", a)
+b <- "turtles"
+sprintf("I like %s and %s.", a, b)
+```
+
+The power of \texttt{sprintf()} is more evident when printing numbers. Integers are substituted with \texttt{\%d}.
+```{r eval = TRUE}
+int <- 1
+sprintf("This is class number %d.", int)
+sprintf("This is class: %2d.", int) # Add leading spaces
+sprintf("Class number %02d.", int) # Add leading zeroes (2 digits total)
+```
+
+Doubles are substituted with \texttt{\%f}.
+```{r eval = TRUE}
+sprintf("%f", pi)
+sprintf("%.3f", pi) # 3 digits past the decimal
+sprintf("%1.0f", pi) # 1 integer and no decimal digits
+sprintf("%1.7f", pi) # 1 integer and 7 decimal digits
+sprintf("%+f", pi) # Add a sign
+sprintf("%-f", -pi)
+sprintf("% f", pi) # Leading space
+```
+
+
+## Binary
+Binary (or raw) data is in hexadecimal format and is a more basic type of data. This data type does not generally arise for empirical work.
+```{r eval = TRUE}
+b <- as.raw(9)
+b
+typeof(b)
+```
+
+## Practice Exercises 2.3
+1. Define a variable with the value 82. Using this variable, define another variable that is $82^2 - 7$.
+2. What do you think the following will output? Test it out.
+```{r, eval = FALSE}
+paste("Me", "Myself", "&", "I")
+```
+3. Edit the code in question 3 to output all one word without spaces. 
+4. Edit the code in question 3 to output commas between each of the elements. 
+
+# Structures
+
+The data types can be organized into data structures. \textbf{The basic structures are vectors, matrices, arrays, lists, data frames, and factors.}
+
+## Vectors
+Vectors are sequences of data points of the same type. Even if you try to make a vector with different data types, the resulting vector will be coerced so that every component has the same type. R defaults to the more general type.
+```{r eval = TRUE}
+c(1000, 1, 2)
+c(1000, TRUE, 2)
+c(1000, TRUE, "2")
+c("a", "b", "c")
+1:3 # Same as c(1, 2, 3) but stored as integer and less memory-intensive
+3:1
+seq(from = 1, to = 10, by = 0.5)
+seq(from = 100, to = 90, by = -2)
+seq(from = 1, to = 10, length = 10)
+rep(3, times = 10)
+rep(1:3, each = 2)
+```
+
+Sometimes it is useful to add names to the elements of the vector, rather than just the numerical index.
+```{r eval = TRUE}
+s <- c(1, 3, 3, 2, 1, 4, 2, 4, 1, 8, 5, 1, 3)
+names(s) <- letters[1:13] # First 13 letters of the alphabet
+s
+length(s)
+class(s)
+attributes(s) # We added an attribute
+```
+
+The names can also be added when making the vector initially.
+```{r eval = TRUE}
+s <- c(a = 1, b = 3, c = 3, d = 2)
+s
+```
+
+Another piece of metadata (attribute) available for vectors is \texttt{comment}.
+```{r eval = TRUE}
+comment(s) <- "Letter scores in Scrabble"
+attributes(s)
+```
+
+
+### Vectorization
+Many operations and functions in R are designed to be particularly efficient with vectors. Instead of going through each element of the vector, you can apply operations and functions to the full vector.
+
+```{r eval = TRUE}
+x <- c(0, 1, 4)
+y <- c(5, 9, 2)
+x + y
+x * y
+factorial(x)
+log(y)
+```
+
+### Recycling
+
+If you perform an operation on vectors of unequal lengths, R will recycle elements of the shorter vector. In this example, \texttt{x} has 3 elements and \texttt{y} has 6 elements. The first 3 elements of \texttt{y} are added to the elements of \texttt{x}, and the same for the second 3 elements \texttt{y}
+```{r eval = TRUE}
+x <- c(0, 1, 4)
+y <- c(5, 9, 2, 2, 1, 0)
+x + y
+```
+
+Recycling often occurs silently, i.e., no warning message is displayed. An exception is when the longer vector is not a multiple of the shorter object.
+```{r eval = TRUE}
+x <- c(0, 1, 4)
+y <- c(5, 9, 2, 2, 1)
+x + y
+```
+
+While recycling may seem counter-intuitive, it is very useful within the framework of R. Notice that there are no scalars, only vectors with one element. Without recycling, dealing with very simple operations like the one below would be burdensome.
+```{r eval = TRUE}
+c <- 2
+c
+length(c)
+x
+x * c
+```
+
+### Manipulation
+
+The function \texttt{c()} is also used to add on to existing vectors.
+```{r eval = TRUE}
+x <- 1:10
+c(x, 90:100)
+```
+
+Subsetting vectors involves accessing certain elements. It can be done with positive numbers, negative numbers, logical values, or names.
+```{r}
+x <- 1:26
+names(x) <- LETTERS
+```
+Subsetting can be done with positive numbers. This returns the elements at the specified positions.
+```{r eval = TRUE}
+x[2]
+x[15:17]
+x[c(24, 2, 11)]
+x[c(2, 2, 7)]
+```
+
+Subsetting can also be done with negative numbers. This returns elements except at the specified positions.
+```{r eval = TRUE}
+x[-1]
+x[-(1:13)]
+x[-c(2, 4, 6, 8, 13:26)]
+```
+
+Subsetting with logical values returns elements corresponding to \texttt{TRUE}.
+```{r eval = TRUE}
+x[c(TRUE, rep(FALSE, 25))]
+x[x < 13]
+x[x > 22 | x < 10]
+x[c(TRUE, FALSE)] # Remember recycling!
+```
+
+Finally, when there are names, vectors can be subset by names. This returns elements corresponding to the specified names.
+```{r eval = TRUE}
+x["A"]
+x[c("A", "Q", "M")]
+```
+
+
+### Practice Exercises 2.4
+1. R has built-in functions to create vectors of random numbers from different distributions. Here is an example that creates a vector with 1,000 random draws from the uniform $[0,1]$ distribution. Add this code to your script to test it.
+```{r eval = FALSE}
+uniform <- runif(1000, min = 0, max = 1)
+hist(uniform)
+```
+2. Create two vectors, \texttt{x} and \texttt{y}, each comprised of 10 random draws from the uniform $[0,1]$ distribution. 
+3. Subset \texttt{x} to only keep the first 3 realizations. Define a vector called \texttt{z} with this subset.
+4. What will \texttt{y + z} output? Check your answer.
+5. Subset \texttt{y} to only keep elements greater than 0.75.
+
+## Matrices and Arrays
+Matrices are like vectors but with two dimensions. Just like for vectors, all elements of matrices and arrays should have the same data type. The columns need to have the same number of elements. 
+
+```{r eval = TRUE}
+N <- matrix(1:12, nrow = 4, ncol = 3) # Automatically fills by column
+N 
+str(N)
+attributes(N)
+dim(N)
+```
+
+Note that the matrix fills in by column. Specifying the \texttt{byrow} option will result in the matrix filling in by row.
+```{r eval = TRUE}
+O <- matrix(1:12, nrow = 4, ncol = 3, byrow = TRUE)
+O
+```
+
+Matrices can contain other data types, as long as they are uniform. Here are examples with character strings, doubles, logical values, and missing values.
+```{r eval = TRUE}
+P <- matrix(letters, nrow = 2, ncol = 13)
+P
+Q <- matrix(runif(9, min = 0, max = 1), nrow = 3, ncol = 3)
+Q
+R <- matrix(c(TRUE, TRUE, FALSE, TRUE), nrow = 2, ncol = 2)
+R
+S <- matrix(NA, nrow = 3, ncol = 4) # Take note of the recycling here!
+S
+```
+
+Matrices always have the \texttt{dim} attribute. It is possible to add other attributes, including row names, column names, and comments.
+```{r eval= TRUE}
+rownames(O) <- c("row1", "row2", "row3", "row4") 
+colnames(O) <- c("col1", "col2", "col3") 
+dimnames(O)
+dimnames(O)[[1]] <- c("new1", "new2", "new3", "new4")
+O
+comment(O) <- "Comment for matrix O."
+attributes(O)
+```
+
+When the number of elements of the data is smaller than the number of elements in the matrix, the data are recycled.  
+```{r eval = TRUE}
+matrix(1:10, nrow = 2, ncol = 10, byrow = TRUE)
+matrix(1:10, nrow = 2, ncol = 6, byrow = TRUE)
+```
+
+The functions \texttt{cbind()} (column bind) and \texttt{rbind()} (row bind) can be used to create matrices from vectors or to add on to matricies.
+
+```{r eval = TRUE}
+a <- c(2, 4, 6)
+b <- c(1, 3, 5)
+c <- c(0, 0, 1)
+cbind(a, b)
+rbind(a, b)
+A <- cbind(a, b, c)
+A
+A <- cbind(A, c(1, 1, 1))
+A
+rbind(A, c(8, 7, 1, 1))
+```
+
+Brackets, with the general format \texttt{matrix[rows, columns]}, are used to subset matrices.
+```{r eval = TRUE}
+O
+O[1, 2]
+```
+
+You can select multiple items by passing vectors of indices.
+```{r eval = TRUE}
+O[1:2, c(1, 3)]
+```
+
+Leaving one argument empty selects all the rows or columns.
+```{r eval = TRUE}
+O[, c(1, 3)]
+O[1:2, ]
+```
+
+If you want to preserve the attributes of the matrix, specify \texttt{drop = FALSE}.
+```{r eval = TRUE}
+O[, 2]
+O[, 2, drop = FALSE]
+```
+
+Arrays are just like matrices but with more than two dimensions. 
+```{r eval = TRUE}
+P <- array(1:12, dim = c(2, 2, 3))
+P
+dim(P)
+class(P)
+Q <- array(1:12, dim = c(2, 2 ,2 ,2))
+Q
+```
+
+Subsetting arrays works much the same way as subsetting matrices, except there are more than two dimensions.
+```{r}
+P[, , 1]
+P[1:2, 1, ]
+```
+
+### Matrix Algebra
+
+We define the matrices \texttt{A}, \texttt{B}, and \texttt{C} to demonstrate matrix operations and functions.
+```{r eval = TRUE}
+A <- matrix(1:4, nrow = 2)
+A
+B <- matrix(5:8, nrow = 2)
+B
+C <- diag(2)
+C
+```
+
+Scalar addition, subtraction, multiplication, and division are straightforward.
+```{r eval = TRUE}
+A + 1
+B - 0.5
+C * 3
+A / 4
+```
+
+Element-wise addition, subtraction, multiplication, and division are the same but with two matrices rather than scalars.
+```{r eval = TRUE}
+A + B
+A - B
+A * B
+A / B
+```
+
+Below are the core functions to manipulate, characterize, and multiply matrices. There are many others, both in the basic R functions and in external packages. 
+```{r eval = TRUE}
+t(B) # Transpose
+A %*% B # Matrix multiplication
+solve(B) # Inverse
+det(A) # Determinant
+sum(diag(A)) # Trace
+kronecker(A, B) # Kronecker product
+eigen(B) # Spectral decomposition
+```
+
+### Practice Exercises 2.5
+1. Create the following matrices.
+\begin{align*}
+  X = \begin{bmatrix} 1 & 0 & 9 \\ 1 & 0 & 14 \\ 1 & 0 & 12 \\ 1 & 1 & 12 \\ 1 & 1 & 14 \\ 1 & 1 & 10  \end{bmatrix}\quad Y = \begin{bmatrix} 415 \\ 740 \\ 582 \\ 493 \\ 623 \\ 530 \end{bmatrix} 
+\end{align*}
+2. Calculate the OLS estimator: $(X'X)^{-1}(X'Y)$. 
+
+
+## Lists
+
+Lists are general as they can combine different data types. The elements of lists can even be other data structures (including other lists!), and do not need to be uniform length.
+```{r eval = TRUE}
+r <- list(1, "Hi", FALSE, 2.3, 19:23, matrix(1:4, nrow = 2))
+r
+r[[3]] # Access the third elements
+length(r)
+class(r)
+str(r)
+```
+
+If the order of the elements is not conceptually relevant, then it may make more sense to name the elements of lists. 
+```{r eval = TRUE}
+s <- list(myinteger = 1, 
+          mycharacter = "Hi", 
+          mylogical = FALSE, 
+          mydouble = 2.3, 
+          myvector = 19:23, 
+          mymatrix = matrix(1:4, nrow = 2))
+str(s)
+```
+
+The dollar sign, \texttt{\$} can be used to refer to a named element of a list.
+```{r}
+s$myvector
+```
+
+Names can also be added once a list is created.
+```{r eval = TRUE}
+t <- list(1:10, c("USA", "Mexico", "Canada"))
+t
+attributes(t)
+names(t) <- c("numbers", "countries")
+attributes(t)
+```
+
+Comments can also be added, for the whole list or for certain elements
+```{r eval = TRUE}
+comment(t) <- "Example list"
+attr(t, "countries") <- "North American Countries"
+str(t)
+attributes(t)
+```
+
+### Manipulation
+The function \texttt{list()} can be nested to append elements to lists. In this example, a new element is added to the first element (a list with 4 elements).
+```{r eval = TRUE}
+l1 <- list("R", 1:9, c(TRUE, FALSE), 1.5)
+l1
+l2 <- list(l1, letters[1:5])
+str(l2)
+```
+
+To simply append a fifth element to the original list, use the function \texttt{append()}.
+```{r eval = TRUE}
+l3 <- append(l1, list(letters[1:5]))
+str(l3)
+```
+Notice the difference without \texttt{list()} in the second argument.
+```{r}
+l4 <- append(l1, letters[1:5])
+str(l4)
+```
+
+Another way to add a new element is with the \texttt{\$} sign. This requires a name for the new element.
+```{r eval = TRUE}
+l3$greeting <- "Hello world!"
+str(l3)
+```
+
+Subsetting of lists is done with \texttt{[]}, \texttt{[[]]},and \texttt{\$}. The exact approach depends on whether you want to preserve the output or simplify the output.
+
+Preserving the output means keeping the list format and attributes.
+```{r eval = TRUE}
+t
+t[1]
+t["numbers"]
+t[1:2]
+t[c("numbers", "countries")]
+```
+
+Simplifying the output extracts what is inside each element. Imagine that each element of a list is a box. The simplified output returns what is inside each box.
+```{r eval = TRUE}
+t[[1]]
+t[["numbers"]]
+t$numbers
+```
+
+With a simplified output, you can also extract elements of the objects.
+```{r eval = TRUE}
+t[[1]][8]
+t[["countries"]][1:2]
+t$countries[3]
+```
+
+Subsetting with a nested list follows the same idea as above. Continue to be mindful of persevering vs.\ simplifying output!
+```{r eval = TRUE}
+str(l2)
+l2[[2]][3] 
+l2[[1]][1:5]
+names(l2) <- c("item1", "item2")
+names(l2[[1]]) <- paste0("subitem", 1:4)
+str(l2)
+l2[["item1"]][["subitem4"]]
+l2$item1$subitem2
+l2$item1$subitem2[6:9]
+```
+
+### Practice Exercises 2.6
+1. Create a list with the following elements. First, a character string with your name. Second, an integer with your age. Third, a logical vector whose elements are \texttt{TRUE} if you know how to ride/drive a motorcycle, bicycle, scooter, and car, and \texttt{FALSE} otherwise.
+2. Access the second index of the third element of your list. That is, do you know how to ride a bicycle?
+
+## Factors
+Factors organize character strings by extracting the possible values. This structure can be useful in datasets with character string variables. It has some efficiency advantages as well because R stores the vector as integers rather than character strings.
+```{r eval = TRUE}
+u <- factor(c("Macro", "Metrics", "Micro", "Micro", "Macro"))
+u
+length(u)
+class(u)
+typeof(u)
+levels(u)
+summary(u)
+```
+
+The function \texttt{as.factor()} converts vectors of character strings or integers to factors.
+```{r eval = TRUE}
+a <- c("Red", "Blue", "Blue", "Red", "Red", "Blue")
+as.factor(a)
+b <- c(1:4, 4:1)
+b
+as.factor(b)
+```
+
+## Data Frames
+We will discuss other data structures to handle the datasets we are interested in as empiricists. The most basic structure to represent individual $\times$ variable tables is the data frame. Each row corresponds to a unit and each column corresponds to a variable. The columns must have the same type across units, although different columns can have different types. The columns have names, corresponding to the variable names. 
+
+```{r eval = TRUE}
+t <- data.frame(Salary = c(623, 515, 611, 729, 843),
+                Dpt = c("IT", "Operations", "IT", "HR", "Finance"))
+t
+dim(t)
+class(t)
+str(t)
+```
+
+Vectors can be combined into a data frame.
+```{r eval = TRUE}
+a <- 1:3
+b <- letters[1:3]
+c <- LETTERS[1:3]
+abc <- data.frame(var1 = a, var2 = b, var3 = c)
+abc
+```
+
+The possible attributes of data frames are row names, column names, and comments.
+```{r eval = TRUE}
+attributes(abc)
+rownames(abc) <- c("first", "second", "third")
+names(abc) <- c("numbers", "lower", "upper") # Alternatively, colnames()
+comment(abc) <- "This is a very small dataframe."
+attributes(abc)
+```
+
+The function \texttt{as.data.frame()} converts lists and matrices to data frames.
+```{r eval = TRUE}
+O
+Odf <- as.data.frame(O)
+str(Odf)
+```
+
+Columns can be added to data frames using \texttt{cbind()} as long as the number of elements of the vector(s) is the same as the number of rows of the data frame. Rows can be added with \texttt{rbind()}, but this is not advised unless you are confident that the data types are the same in the original data frame and the new row(s). If not, the columns will silently change type.
+```{r eval = TRUE}
+t
+new <- c(1, 1, 1, 0, 0)
+t <- cbind(t, new)
+t
+t <- rbind(t, c(313, "Marketing", 1))
+t
+```
+
+The more robust way to add rows is by first formatting the new rows as a data frame and then combining the two data frames. 
+```{r eval = TRUE}
+newdf <- data.frame(Salary = 701, Dpt = "Finance", new = 0)
+rbind(t, newdf)
+```
+
+Subsetting data frames is very similar to subsetting matrices and arrays. Importantly, you should consider if you need preserving or simplifying output. Subsetting can be done by row numbers, row names, column numbers, and column names.
+```{r eval = TRUE}
+t[1:2, ]
+t[c("2", "3"), ]
+t[c("Salary", "new")] # List-type subsetting
+t[ , c("Salary", "new")] # Matrix-type subsetting
+t[3:5, 1]
+t[ , 2] # Simplifying
+t[ , 2, drop = FALSE] # Preserving
+```
+
+
+### Practice Exercises 2.7
+1. Create a data frame from the following list.
+```{r}
+scores <- list(scrabble = c(1, 3, 3, 2, 1, 4, 2, 4, 1, 8, 5, 1, 3,
+                            1, 1, 3, 10, 1, 1, 1, 1, 4, 4, 8, 4, 10),
+               sequential = 1:26,
+               name = letters)
+```
+2. Subset the letters with Scrabble scores larger than 3. Do this once with simplifying and once with preserving output.
+3. Add a variable called \texttt{reverse} that assigns a value of 26 to A and 1 to Z. 
+
+## Other Structures
+Dates and time series are two other basic data structures. See chapters 3.2.2.6 and 3.2.2.7 of @lafaye_de_micheaux_r_2013 and chapter 8 of @boehmke_data_2016 for more information. 
+
+There are many other types of structures. We will learn more about structures that are particularly helpful for data analysis. We will learn how to use the basic types and structures in conditional statements, loops, and functions.
+
+# Further Reading
+The above information comes from chapters 3.5-3.6, 4, 5.1, 7.1, 9-13 of @boehmke_data_2016 and chapters 3.1-3.2, 10.2 of @lafaye_de_micheaux_r_2013.
+
+## References

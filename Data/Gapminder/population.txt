@@ -1,0 +1,196 @@
+country,population
+Afghanistan,34400000
+Albania,2890000
+Algeria,39700000
+Andorra,78000
+Angola,27900000
+Antigua and Barbuda,93600
+Argentina,43100000
+Armenia,2930000
+Australia,23900000
+Austria,8680000
+Azerbaijan,9620000
+Bahamas,374000
+Bahrain,1370000
+Bangladesh,156000000
+Barbados,285000
+Belarus,9440000
+Belgium,11300000
+Belize,361000
+Benin,10600000
+Bhutan,728000
+Bolivia,10900000
+Bosnia and Herzegovina,3430000
+Botswana,2120000
+Brazil,204000000
+Brunei,415000
+Bulgaria,7200000
+Burkina Faso,18100000
+Burundi,10200000
+Cambodia,15500000
+Cameroon,23300000
+Canada,36000000
+Cape Verde,525000
+Central African Republic,4490000
+Chad,14100000
+Chile,18000000
+China,1410000000
+Colombia,47500000
+Comoros,777000
+"Congo, Dem. Rep.",76200000
+"Congo, Rep.",4860000
+Costa Rica,4850000
+Cote d'Ivoire,23200000
+Croatia,4230000
+Cuba,11300000
+Cyprus,1160000
+Czech Republic,10600000
+Denmark,5690000
+Djibouti,914000
+Dominica,71200
+Dominican Republic,10300000
+Ecuador,16200000
+Egypt,92400000
+El Salvador,6330000
+Equatorial Guinea,1170000
+Eritrea,3340000
+Estonia,1320000
+Eswatini,1100000
+Ethiopia,101000000
+Fiji,869000
+Finland,5480000
+France,64500000
+Gabon,1950000
+Gambia,2090000
+Georgia,4020000
+Germany,81800000
+Ghana,27800000
+Greece,10700000
+Grenada,110000
+Guatemala,16300000
+Guinea,11400000
+Guinea-Bissau,1740000
+Guyana,767000
+Haiti,10700000
+Holy See,790
+Honduras,9110000
+Hungary,9780000
+Iceland,330000
+India,1310000000
+Indonesia,258000000
+Iran,78500000
+Iraq,35600000
+Ireland,4650000
+Israel,7980000
+Italy,60600000
+Jamaica,2890000
+Japan,128000000
+Jordan,9270000
+Kazakhstan,17600000
+Kenya,47900000
+Kiribati,111000
+Kuwait,3840000
+Kyrgyz Republic,5960000
+Lao,6740000
+Latvia,2000000
+Lebanon,6530000
+Lesotho,2060000
+Liberia,4470000
+Libya,6420000
+Liechtenstein,37500
+Lithuania,2930000
+Luxembourg,567000
+Madagascar,24200000
+Malawi,16700000
+Malaysia,30300000
+Maldives,455000
+Mali,17400000
+Malta,434000
+Marshall Islands,57400
+Mauritania,4050000
+Mauritius,1260000
+Mexico,122000000
+"Micronesia, Fed. Sts.",109000
+Moldova,4070000
+Monaco,37700
+Mongolia,3000000
+Montenegro,627000
+Morocco,34700000
+Mozambique,27000000
+Myanmar,52700000
+Namibia,2310000
+Nauru,10400
+Nepal,27000000
+Netherlands,16900000
+New Zealand,4610000
+Nicaragua,6220000
+Niger,20000000
+Nigeria,181000000
+North Korea,25200000
+North Macedonia,2080000
+Norway,5200000
+Oman,4270000
+Pakistan,199000000
+Palau,17700
+Palestine,4530000
+Panama,3970000
+Papua New Guinea,8110000
+Paraguay,6690000
+Peru,30500000
+Philippines,102000000
+Poland,38000000
+Portugal,10400000
+Qatar,2570000
+Romania,19900000
+Russia,145000000
+Rwanda,11400000
+Samoa,194000
+San Marino,33300
+Sao Tome and Principe,199000
+Saudi Arabia,31700000
+Senegal,14600000
+Serbia,8880000
+Seychelles,95000
+Sierra Leone,7170000
+Singapore,5590000
+Slovak Republic,5440000
+Slovenia,2070000
+Solomon Islands,603000
+Somalia,13800000
+South Africa,55400000
+South Korea,50800000
+South Sudan,10700000
+Spain,46700000
+Sri Lanka,20900000
+St. Kitts and Nevis,51200
+St. Lucia,179000
+St. Vincent and the Grenadines,109000
+Sudan,38900000
+Suriname,559000
+Sweden,9760000
+Switzerland,8300000
+Syria,18000000
+Tajikistan,8450000
+Tanzania,51500000
+Thailand,68700000
+Timor-Leste,1200000
+Togo,7320000
+Tonga,101000
+Trinidad and Tobago,1370000
+Tunisia,11200000
+Turkey,78500000
+Turkmenistan,5570000
+Tuvalu,11100
+Uganda,38200000
+Ukraine,44900000
+United Arab Emirates,9260000
+United Kingdom,65900000
+United States,321000000
+Uruguay,3410000
+Uzbekistan,30900000
+Vanuatu,271000
+Venezuela,30100000
+Vietnam,92700000
+Yemen,26500000
+Zambia,15900000
+Zimbabwe,13800000

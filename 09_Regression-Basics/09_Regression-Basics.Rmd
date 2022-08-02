@@ -1,0 +1,366 @@
+---
+title: "Regression Basics"
+subtitle: "Chapter 9"
+author: "Anna Ziff"
+date: "Minicourse: R and Workflow"
+thanks: "Please contact anna.ziff@duke.edu if there are errors."
+output: pdf_document
+bibliography: ../R-for-Economists.bib
+header-includes:
+    - \usepackage{fancyhdr}
+    - \usepackage{hyperref}
+    - \pagestyle{fancy}
+    - \fancyfoot[R]{Anna Ziff}
+    - \fancyfoot[L]{\today}
+    - \fancyhead[R, C, L]{}
+    - \renewcommand{\headrulewidth}{0pt}
+urlcolor: blue
+---
+
+\tableofcontents
+\clearpage
+
+Here are the libraries you will need for this chapter.
+```{r, eval = TRUE, message = FALSE, warning = FALSE}
+library(AER)
+library(dplyr)
+library(ggplot2)
+library(plm) 
+library(splines)
+library(stargazer)
+```
+
+
+# Linear Regression
+
+First, you may want to inspect the data graphically using \texttt{plot()} or \texttt{ggplot()}. 
+
+
+R has a \texttt{formula} class that is used in linear models. The tilde (~) in the below indicates that "\texttt{y} is explained by \texttt{x}."
+```{r}
+f <- y ~ x
+f
+class(f)
+```
+
+This format is then used in regression functions.
+```{r}
+x <- seq(0, 10, by = 0.5)
+y <- 2 + 3 * x + rnorm(21)
+lm(formula = y ~ x)
+```
+
+This function is more usually used with a data set (data frames or tibbles are acceptable). We will use the small data frame \texttt{Journals} from the \texttt{AER} package for illustration. First, we inspect the data.
+```{r}
+data("Journals", package = "AER")
+jtib <- tibble(Journals)
+```
+
+Let us say we are interested in relating the log of price per citations and the log of the number of subscriptions. We prepare the data for this analysis.
+```{r}
+jtib_analysis <- jtib %>%
+    select(title, subs, price, citations) %>%
+    mutate(citeprice = price / citations) 
+
+summary(jtib_analysis)
+```
+
+We are interested in estimating the parameters of the following equation.
+
+$$ \log(\texttt{subs}_i) = \beta_1  + \beta_2 \log(\texttt{citeprice}_i) + \varepsilon_i$$
+
+Translating this equation into R's formula class is as follows. This is because the intercept is automatically included.
+```{r,eval = FALSE}
+log(subs) ~ log(citeprice)
+```
+
+To then estimate the model, we insert this formula into \texttt{lm()}. The second argument specifies which dataset to use.
+```{r}
+lm(log(subs) ~ log(citeprice), data = jtib_analysis)
+lm(log(subs) ~ 1 + log(citeprice), data = jtib_analysis) # Make the intercept explicit
+```
+
+While the output tells us the estimated coefficients, we can get more information by defining the object to an output. The 12 components are now easily accessible from the object \texttt{out}, which acts as a list. Calling \texttt{summary()} on the object gives a lot more information than the usual print-out.
+```{r}
+out <- lm(log(subs) ~ log(citeprice), data = jtib_analysis)
+class(out)
+names(out)
+out$coefficients
+summary(out)
+```
+
+The summarized object can be saved as well!
+```{r}
+out_sum <- summary(out)
+class(out_sum)
+names(out_sum)
+```
+
+Here are more functions that can be applied to \texttt{lm} objects.
+```{r, eval = FALSE}
+# Print the object
+print(out)
+
+# Coefficients of the regression
+coef(out)
+
+# Residuals
+residuals(out) # Alternatively, resid(out)
+
+# Fitted values
+fitted(out)
+
+# ANOVA (helpful for F-tests)
+anova(out)
+
+# Predict (same as fitted() here but more flexible to calculate standard errors)
+predict(out)
+```
+```{r, eval = TRUE}
+# Confidence Interval
+confint(out)
+confint(out, level = 0.9)
+
+# Residual Sum of Squares
+deviance(out)
+
+# Variance-Covariance Matrix
+vcov(out)
+
+# Log-likelihood
+logLik(out)
+
+# Information criteria
+AIC(out)
+
+# Hypothesis test
+linearHypothesis(out, "log(citeprice) = -0.5")
+linearHypothesis(out, hypothesis.matrix = c(0, 1), rhs = -0.5)
+```
+
+Now that we are introduced to the basic functions available for linear regression, we can explore more complicated models.
+```{r}
+data("CPS1988", package = "AER") 
+cps <- tibble(CPS1988)
+summary(cps)
+```
+
+Let us fit the Mincer equation. The function \texttt{I()} ensures that the squared term is interpreted mathematically rather than a formula specification. It is clear that \texttt{+} does not mean arithmetic addition in the formula class. Similarly, the asterisk, colon, forward slash, and carrot symbol have formula-specific meanings. If you need to use them in another capacity, they must be inside \texttt{I()}. 
+```{r}
+mincer <- lm(log(wage) ~ experience + I(experience^2) + education + ethnicity, data = cps)
+summary(mincer)
+```
+
+
+The variable \texttt{ethnicity} is a factor with two levels, "cauc"and "afam." The formula call above automatically drops all but the first level.
+```{r}
+table(cps$ethnicity)
+```
+
+To change the level, use \texttt{relevel()}.
+```{r}
+cps <- cps %>%
+    mutate(ethnicity = relevel(ethnicity, ref = 2))
+lm(log(wage) ~ experience + I(experience^2) + education + ethnicity, data = cps) %>% 
+    summary()
+```
+
+
+Setting the coefficient to 0 is simple with the formula specification.
+```{r}
+lm(log(wage) ~ experience + I(experience^2) + education + ethnicity - 1, data = cps) %>%
+    summary()
+```
+
+Adding interactions is done with \texttt{:} without specifying the main effects. With \texttt{*}, the interactions and main effects are included. 
+```{r}
+# No main effects
+lm(log(wage) ~ experience + I(experience^2) + education : ethnicity, data = cps) %>%
+    summary()
+
+# Main effects
+lm(log(wage) ~ experience + I(experience^2) + education * ethnicity, data = cps) %>%
+    summary()
+```
+
+Use the forward slash to fit separate regressions. 
+```{r}
+lm(log(wage) ~ ethnicity / (experience + I(experience^2) + education), data = cps) %>%
+    summary()
+```
+
+
+Splines can easily be estimated for semiparametric models. Suppose instead of specifying a second-order polynomial for experience, we want to have a more flexible specification.
+
+$$ \log(\texttt{wage}_i) = \beta_1  +  g(\texttt{experience}_i)+ \beta_2 \texttt{education}_i + \beta_3 \texttt{ethnicity}_i + \varepsilon_i$$
+
+The function \texttt{bs()} generates B splices with a specified number of degrees of freedom. See the documentation for alternative ways to specify the splines. The package \texttt{np} allows for kernel methods.
+```{r}
+mincer_plm <- lm(log(wage) ~ bs(experience, df = 5) + education + ethnicity, data = cps)
+```
+
+
+Weights can be added to the model with the \texttt{weights} argument.
+```{r}
+lm(log(subs) ~ log(citeprice), data = jtib_analysis, weights = 1/citeprice^2) %>%
+    summary()
+```
+
+## Evaluate Assumptions 
+
+The \texttt{lm} object can be plotted with the built-in \texttt{plot()} function. This will automatically run some diagnostic plots. The function \texttt{par()} shows the plots at the same time.
+```{r}
+mincer <- lm(log(wage) ~ experience + I(experience^2) + education + ethnicity, data = cps)
+par(mfrow = c(2, 2))
+plot(mincer)
+par(mfrow = c(1, 1)) # Set the output back to 1 plot at a time
+```
+
+The function \texttt{anova()} can be helpful in comparing the residual sum of squares of nested models.
+```{r}
+mincer_noeth <- lm(log(wage) ~ experience + I(experience^2) + education, data = cps)
+anova(mincer_noeth, mincer) 
+```
+
+The function \texttt{update()} is a more elegant way to estimate nested models.
+```{r}
+mincer_noeth <- update(mincer, formula = . ~ . - ethnicity)
+```
+
+This can all be combined in the function \texttt{waldtest()}. The F-test is the same as above, but the residual sums of square are not printed. It is possible to specify other types of tests (e.g., quasi-F tests).
+```{r}
+waldtest(mincer, . ~ . - ethnicity)
+```
+
+If there heteroskedasticity, the functions \texttt{vcovHC()} and \texttt{coeftest()} can be combined.
+```{r}
+robustvcov <- vcovHC(mincer, type = "HC") # Variance-Covariance matrix 
+robustse <- diag(vcovHC(mincer, type = "HC"))
+coeftest(mincer, vcov. = robustvcov)
+```
+
+# Fixed Effects
+
+There are several different approaches to include fixed effects in regressions. To demonstrate, we will use the sample data \texttt{Produc} from the \texttt{plm} package. This data frame contains a panel of U.S. production for 48 states between 1970 and 1986. Recall that you can always type \texttt{?Produc} to read a description of sample data.
+```{r}
+data("Produc", package = "plm")
+```
+
+Suppose we want to estimate the following regression with state fixed effects,
+$$
+\log(\text{GSP}_{it}) = \beta_0 + \beta_1 \log(\text{Pub. Capital Stock})_{it} + \beta_2 \log(\text{Pri. Capital Stock})_{it} + \beta_3 \log(\text{Emp.}) + \beta_4 \text{Unemp.} +  \text{State}_i + \varepsilon_{it}
+$$
+Because \texttt{state} is a factor variable, we can simply add it to the formula and R will estimate fixed effects in relation to the first level. 
+```{r, eval = FALSE}
+lm(log(gsp) ~ log(pcap) + log(pc) + log(emp) + unemp + state, data = Produc) %>%
+  summary()
+```
+
+If we try to do that with \texttt{year} to add year fixed effects, R would treat it as a number rather than a fixed effect. We can add \texttt{factor()} to cast it as a factor variable.
+```{r, eval = FALSE}
+lm(log(gsp) ~  log(pcap) + log(pc) + log(emp) + unemp  + state + factor(year), data = Produc) %>%
+  summary()
+```
+
+Recall that you can remove the intercept if you would like to remove the intercept and include all the factors (depending on your degrees of freedom).
+```{r}
+lm(log(gsp) ~ log(pcap) + log(pc) + log(emp) + unemp + factor(year) - 1, data = Produc) %>%
+  summary()
+```
+
+Additionally, you could demean your independent and dependent variables to get the same coefficient estimates and standard errors. If you have a really large dataset, this could ease the computational burden of explicitly estimating many fixed effects.
+```{r}
+produc_demean <- Produc %>%
+  mutate(across(c("gsp", "pcap", "pc", "emp"), log)) %>%
+  group_by(year) %>%
+  mutate(across(c("gsp", "pcap", "pc", "emp", "unemp"),
+                ~ .x - mean(.x)))
+
+lm(gsp ~ pcap + pc + emp + unemp - 1, data = produc_demean) %>%
+  summary()
+```
+
+Another option is to use \texttt{plm}, which is a widely used and reliable package. The \texttt{plm} function transforms the data and implements \texttt{lm}. The standard errors are robust, which is why they differ from what we got using \texttt{lm} directly.
+```{r}
+plm(log(gsp) ~ log(pcap) + log(pc) + log(emp) + unemp - 1,
+    data = Produc,
+    index = "year",
+    model = "within") %>%
+  summary()
+```
+
+It is simple to add another set of fixed effects. See the documentation for additional complications or choices you could make. 
+```{r, eval = FALSE}
+plm(log(gsp) ~ log(pcap) + log(pc) + log(emp) + unemp,
+    data = Produc,
+    index = c("state", "year"),
+    model = "within") %>%
+  summary()
+```
+
+# Display Results
+
+The below offers some **very** basic examples. In practice, you can combine all of your knowledge of graphing and creating tables to output the exact figures and tables you wish. The statistics, residuals, fitted values, etc. are readily available and be combined as needed.
+
+## Graphs
+
+Results of regressions can be displayed with the built-in graphing functions using the \texttt{abline()} function
+```{r}
+summary(out)
+
+# Uncomment the lines below to save the plot
+# jpeg("Journals.jpg") # Save plot
+plot(log(jtib_analysis$citeprice), log(jtib_analysis$subs))
+abline(out)
+# dev.off() # Close the device of the saved plot
+```
+
+Recall that \texttt{geom\_smooth()} is a useful layer for \texttt{ggplot2} plots. Note that the formula can be altered.
+```{r}
+ggplot(jtib_analysis, aes(x = log(citeprice), y = log(subs))) +
+  geom_smooth(method = "lm", formula = y ~ x) + 
+  geom_point()
+
+ggplot(jtib_analysis, aes(x = log(citeprice), y = log(subs))) +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2)) + 
+  geom_point()
+```
+
+## Tables
+
+The package \texttt{stargazer} has many options to display regression results in tables. 
+```{r}
+stargazer(out)
+```
+
+More than one model can be included.
+```{r}
+stargazer(mincer, mincer_noeth)
+```
+
+The different components of the output can be controlled with the various options.
+```{r}
+stargazer(mincer, mincer_noeth,
+         covariate.labels = c("Experience", "Experience$^2$",
+                            "Education", "African American",
+                            "Constant"),
+         ci.level = 0.90)
+```
+
+# Caution!
+
+It is always important to vet packages and make sure that they are reliable before using them in your code. Here are some questions you might try to answer qualitatively.
+\begin{itemize}
+\item Is the package updated frequently? 
+\item Is the package widely cited as reliable on StackExchange or other help forums? Or, does it seem to have a lot of errors and forums present workarounds?
+\item Does the creator seem to respond to Issues on the GitHub quickly? 
+\end{itemize}
+
+Vetting packages is especially important for those used in your main analysis. Some economists who publish their own estimators will also publish an R package. If the package is reliable, then this is wonderful. You can rely on their expertise and rigorous testing procedures to ensure that the results are calculated correctly \textit{and} save yourself many hours of coding. However, if the package is not reliable, then your analysis will be wrong. Even if you deem a package to be reliable, keeping an eye on the package's GitHub page can help keep you apprised of updates and corrections.
+
+# Further Reading
+
+The information in the above chapter comes from @kleiber_applied_2008. See chapters 5 and 6 of that textbook for more examples of micro and macro methods. [This list](https://cran.r-project.org/web/views/Econometrics.html) is a great resource for other topics, including IV regression. 
+
+## References
+

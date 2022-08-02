@@ -1,0 +1,12 @@
+country,population
+Afghanistan,34400000
+Albania,2890000
+Algeria,39700000
+Andorra,78000
+Angola,27900000
+Antigua and Barbuda,93600
+Argentina,43100000
+Armenia,2930000
+Australia,23900000
+Austria,8680000
+Azerbaijan,9620000

@@ -1,0 +1,950 @@
+---
+title: "Data Visualization"
+subtitle: "Chapter 6"
+author: "Anna Ziff"
+date: "R Workflow for Economists"
+thanks: "Please contact anna.ziff@duke.edu if there are errors."
+output: pdf_document
+bibliography: ../R-for-Economists.bib
+header-includes:
+    - \usepackage{fancyhdr}
+    - \usepackage{hyperref}
+    - \pagestyle{fancy}
+    - \fancyfoot[R]{Anna Ziff}
+    - \fancyfoot[L]{\today}
+    - \fancyhead[R, C, L]{}
+    - \renewcommand{\headrulewidth}{0pt}
+urlcolor: blue
+---
+
+
+```{r setup, include = FALSE}
+    knitr::opts_knit$set(root.dir = normalizePath("~/Desktop/Duke/projects/R-Workflow-for-Economists/Data/Gapminder")) 
+```
+
+Here are all the libraries you should install for this chapter.
+```{r eval = TRUE, warning = FALSE, message = FALSE}
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+library(RColorBrewer)
+library(readr)
+library(tidyr)
+library(wesanderson) # Optional
+```
+
+\tableofcontents
+\clearpage
+
+One of R's biggest advantages is its potential for creating informative and high-quality plots. This chapter goes through the built-in functions to produce graphs. Even just these functions allow for a wide variety of types of plots and aesthetic adjustments. Then, this chapter goes through the functions in the package \texttt{ggplot2}. These functions add a professional polish to the plots that is harder to achieve with the built-in functions.
+
+# Basic Graphs
+
+## Scatter and Line Plots 
+The function \texttt{plot()} is the most basic plot function. It takes many data structures as inputs, including vectors. If only one vector is specified, it is plotted against an index axis.
+```{r, fig.dim = c(5, 4)}
+y <- 1:10
+plot(y)
+```
+
+If two vectors are specified, the first one is the horizontal axis and the second is the vertical axis.
+```{r, fig.dim = c(5, 4)}
+x <- 11:20
+plot(x, y)
+```
+
+The argument \texttt{pch} adjust the symbol. See \texttt{?pch} for more information, but the symbols are here for reference. You can also specify the symbol in quotation marks. 
+```{r echo = FALSE, fig.align = "center", out.width = "90%"} 
+knitr::include_graphics("/Users/annaziff/Desktop/Duke/classes/R-Mini-Summer2022/05_Class/Figures/pch.png")
+```
+The argument \texttt{cex} adjusts the size of the point. The default is 1. Setting the argument larger than 1 will make it larger while setting the argument less than 1 will make it smaller. Values less than or equal to 0 will result in no points being plotted. The \texttt{col} argument adjusts the color of the point. To just get the names of the built-in colors, type \texttt{colors()}. [Here](http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf) is a reference that lists the names next to the shade.^[If you want even more flexibility in designing color palettes, refer to [this cheatsheet](https://www.nceas.ucsb.edu/sites/default/files/2020-04/colorPaletteCheatsheet.pdf) for some ideas of different packages.]
+```{r, fig.dim = c(5, 4)}
+plot(x, pch = 8, cex = 0.9, col = "blue")
+plot(x, pch = "a", cex = 1.2, col = "mediumorchid")
+plot(x, pch = 23, bg = "palegreen", col = "palegreen4", cex = 2)
+```
+
+
+We can change this scatter plot to a line plot by changing the \texttt{type} argument. The value \texttt{"p"} plots points and is the default; \texttt{"l"} plots lines (there are more types listed in the documentation). The argument \texttt{lwd} controls with width of the line and works the same as \texttt{cex}. The argument \texttt{lty} determines the line type. Here are the available types.
+```{r echo = FALSE, fig.align = "center", out.width = "90%"} 
+knitr::include_graphics("/Users/annaziff/Desktop/Duke/classes/R-Mini-Summer2022/05_Class/Figures/lty.png")
+```
+```{r, fig.dim = c(5, 4)}
+plot(x, type = "l")
+plot(x, type = "l", lwd = 1.2, lty = 4)
+```
+
+Here are the arguments to define the title, axes, axis labels, and the look of the plot environment. The default axis labels will correspond to the object name. The default limits of the axes will correspond to the values of the object. Changing them simply involves defining a lower and upper limit. The arguments \texttt{xaxt = "n"} and \texttt{yaxt = "n"} remove the axes. The argument \texttt{bty = "n"} removes the box surrounding the plot.
+```{r, fig.dim = c(5, 4)}
+plot(x, main = "Title", xlab = "x-axis", ylab = "y-axis")
+plot(x, xlim = c(0, 15))
+plot(x, xaxt = "n", yaxt = "n")
+plot(x, bty = "n")
+```
+
+There are many other aesthetic elements of \texttt{plot()} available in the function's documentation. These basics are sufficient to demonstrate how \texttt{plot()} can be used with data. The tibble \texttt{txhousing} is one of the built-in datasets in the \texttt{ggplot2} package.
+```{r}
+head(txhousing)
+df <- as.data.frame(txhousing) # Convert to data frame to use built-in functions smoothly
+```
+
+It is very simple to graph the pairwise scatter plots to get a sense of the pairwise correlations.
+```{r, fig.dim = c(5, 4)}
+df %>%
+  select(sales, volume, median) %>%
+  plot()
+```
+
+With an actual dataset, we can use the features of \texttt{plot()} in a more meaningful way. The function \texttt{points()} allows you to layer scatter plots on the active plot. 
+```{r, fig.dim = c(5, 4)}
+plot(df[df$city == "Houston", "date"], 
+     df[df$city == "Houston", "median"],
+     pch = 16, col = "purple", ylim = c(75000, 220000),
+     xlab = "Date", ylab = "Median Price")
+points(df[df$city == "Fort Worth", "date"],
+     df[df$city == "Fort Worth", "median"],
+     pch = 16, col = "red")
+```
+
+
+The function \texttt{lines()} works analogously.
+```{r, fig.dim = c(5, 4)}
+plot(df[df$city == "Houston", "date"], 
+     df[df$city == "Houston", "median"],
+     type = "l", ylim = c(75000, 220000),
+     xlab = "Date", ylab = "Median Price")
+lines(df[df$city == "Fort Worth", "date"],
+     df[df$city == "Fort Worth", "median"],
+     lty = 5)
+```
+
+
+
+
+## Bar Plots
+
+Bar plots are useful for visualizing categorical data. The built-in data frame \texttt{USPersonalExpenditure} is useful for illustration, following chapter 4.1 of @zamora_saiz_introduction_2020.
+```{r}
+USPersonalExpenditure
+```
+
+You can plot one column of the data, in this case personal expenditure in 1960. Each bar represents a category of expenditure. The argument \texttt{cex.names} controls the size of the labels.
+```{r, fig.dim = c(5, 4)}
+barplot(USPersonalExpenditure[, 5], 
+        ylab = "Billions USD", cex.names = 0.3,
+        col = "coral2")
+```
+
+Plotting over the whole dataset, the bars are automatically stacked so that now, each bar represents a column (year). The argument \texttt{legend.text = TRUE} makes the legend appear. The argument \texttt{args.legend} controls the position of the legend and the size of the text.
+```{r, fig.dim = c(5, 4)}
+barplot(USPersonalExpenditure, legend.text = TRUE,
+        args.legend = c(x = 2, y = 150, cex = 0.5))
+```
+
+To unstack the plot, use the argument \texttt{beside = TRUE}.
+```{r, fig.dim = c(5, 4)} 
+barplot(USPersonalExpenditure, legend.text = TRUE,
+        args.legend = c(x = 10, y = 80, cex = 0.5),
+        beside = TRUE)
+```
+
+Dot charts achieve a similar goal as bar plots. 
+```{r, fig.dim = c(5, 4)} 
+dotchart(USPersonalExpenditure[, 5], main = "Personal Expenditure, 1960")
+dotchart(USPersonalExpenditure, cex = 0.5, pch = 2)
+```
+
+## Distributions
+
+
+Box and whisker plots display the median, inter-quartile range, and outliers. Recall that \texttt{df} is a data frame of Texas housing prices.
+```{r, fig.dim = c(5, 4)}
+head(df)
+boxplot(df$median ~ df$year, ylab = "Median Sales", xlab = "Year")
+```
+
+
+The plot can be saved to an object to extract the underlying numbers: the median, quartiles, and end of the whiskers (\texttt{stats}), sample size (\texttt{n}), outliers (\texttt{out}), and the number and names of groups (\texttt{group}, \texttt{names}).
+```{r, fig.dim = c(5, 4)}
+boxdf <- boxplot(df$median ~ df$year)
+str(boxdf)
+```
+
+
+The function \texttt{hist()} produces histograms. The default is to plot absolute frequencies (set \texttt{freq = FALSE} to plot densities). The breaks are determined by R, but can be specified with the \texttt{breaks} argument. 
+```{r}
+hist(df$median, xlab = "Median Sales")
+hist(df$median, xlab = "Median Sales",
+     breaks = seq(50000, 305000, 5000))
+```
+
+
+Just like with the box and whisker plot, you can save the inputs for the histogram to an object. 
+```{r}
+dfhist <- hist(df$median, breaks = 15)
+str(dfhist)
+```
+
+
+## Mathematical Functions
+
+The function \texttt{curve()} allows you to plot mathematical functions. This can be done for simple functions.
+```{r, fig.dim = c(5, 4)}
+curve(sin, from = 0, to = 2 * pi)
+```
+
+It can also be used on more complex functions, including those that are user-defined and have more than one argument.
+```{r, fig.dim = c(5, 4)}
+crra <- function(x, eta) {
+  if (eta == 1) {
+    log(x)
+  } else{
+    (x^(1 - eta) - 1) / (1 - eta)
+  }
+}
+
+curve(crra(x, eta = 1.2), xlim = c(1, 3), type = "l")
+curve(crra(x, eta = 2), add = TRUE)
+```
+
+## Practice Exercises 6.1
+1. Create a plot that has 5 lines for each of the values of $\eta$ in the CRRA utility function: 0, 0.5, 1, 5, and 10.
+```{r, eval = FALSE}
+etas <- c(0, 0.5, 1, 5, 10)
+
+for (i in 1:length(etas)) {
+  curve(crra(x, eta = etas[i]), xlim = c(1, 3),  type = "l", add = (i != 1))
+}
+
+
+```
+
+
+# \texttt{ggplot2}
+
+Many separate components are implicit in the graphs created by the built-in functions. These components, such as the axes, come together to form a unified visual representation of the data. The package \texttt{ggplot2} makes these different components explicit, providing easy access to more advanced customization for more precise graphs. Even without much customization, the default styles are aesthetically pleasing, or at least more so than the baseline functions resulting from the built-in functions. 
+
+## Overview
+
+The approach of \texttt{ggplot2} specifies the layers of a plot, providing a "grammar" that can be applied to any situation. Compared to the built-in functions, it is much easier to combine different elements in one graph. All plots contain three main components.^[The additional components are as follows. (1) Layers create the objects that actually appear on the plot. Layers have five components: data, aesthetic mappings, statistical transformation, geometric object, position adjustment. (2) Statistical transformations (e.g., binning). (3) Scales, including a legend or axes, relate the aesthetics back to the data. (4) Coordinate system relates the data to the plane of the graphic. (5) Faceting allows for the data to be broken into subsets (also called latticing or trellising). (6) Theme relates to the font size, background color.]
+\begin{itemize}
+\item Data to visualize
+\item Aesthetic mappings relating the data to aesthetics
+\item Geometric objects (e.g., lines and points) to represent the data in a layer (\textbf{geom})
+\end{itemize}
+
+In the example below, the data are the built-in \texttt{mpg} dataset. The aesthetic mapping is between engine size (\texttt{displ}) and highway miles per gallon (\texttt{hwy}). The geometric layer consists of points, \texttt{geom\_point()}. The data are specified in \texttt{ggplot()}, the aesthetic mapping in \texttt{aes()}, and a layer is added with \texttt{+}. This is the basic structure of a \texttt{ggplot2} graph.
+```{r, fig.dim = c(4, 3)}
+ggplot(data = mpg, aes(x = displ, y = hwy)) +
+  geom_point()
+```
+
+
+
+To be clear, we can build the plot one component at a time. The below creates a plot with a dataset and default aesthetic mappings. There is no geometric element though.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(displ, hwy))
+```
+
+Adding \texttt{geom\_point()} adds the geometric element to make a scatter plot. Without specifying anything in \texttt{geom\_point()}, it inherits the data and aesthetic mappings of \texttt{ggplot()}. Note that the variables are typed directly. 
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point()
+```
+
+
+### Scatter Plots
+
+There are other aesthetic elements besides \texttt{x} and \texttt{y}, including color, shape, and size. Add the \texttt{color} element to the geometric layer, \texttt{geom\_point()}, to change the color of the geographic elements. Note that this is outside \texttt{aes()}.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point(color = "cyan4")
+```
+
+The color can also communicate another dimension of the data. Here, \texttt{ggplot2} maps directly from type of car (\texttt{class}) to a color scale (described in the legend). 
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = displ, y = hwy, color = class)) +
+  geom_point()
+```
+
+The variable \texttt{class} is a character string and so the scale is discrete. If we use a continuous variable, then the scale changes.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = displ, y = hwy, color = year)) +
+  geom_point()
+```
+
+Shape and size are controlled in similar ways as color. The shapes are the same as for the built-in functions. 
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point(size = 3)
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point(shape = 21)
+```
+
+You cannot map between a continuous variable and shape. While it is possible to map between a discrete variable and size, it is not advised and R will throw a warning.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = displ, y = hwy, shape = drv)) +
+  geom_point()
+ggplot(mpg, aes(x = displ, y = hwy, size = cyl)) +
+  geom_point(alpha = 1 / 3) # alpha adjusts the opacity
+```
+
+Adding more layers in \texttt{ggplot2} is straightforward. For scatter plots, it may be relevant to add a (curved) line depicting some average. The geom \texttt{geom\_smooth()} fits a smooth plot to the data, including the standard error.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_smooth()
+```
+
+Specify \texttt{se = FALSE} to remove the standard error.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+```
+
+The default smoothing is LOWESS. The argument \texttt{scan} controls the distance between a given observation and the smoothed line and must be between 0 and 1. A distance of 1 results in a very smooth curve, while a distance of 0 results in a less smooth curve.  With a large dataset, you will need to load the package \texttt{mgcv} to fit another smoothing model. 
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_smooth(span = 0.2)
+```
+
+To fit a linear model, specify \texttt{method = "lm"}. Note that the message changes to reflect the fact that a linear model is being fit.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+Aesthetic elements of the line can be controlled in the \texttt{geom\_smooth()} geom. 
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_smooth(method = "lm", 
+              alpha = 0.5, color = "firebrick4", fill = "firebrick1")
+```
+
+### Practice Exercises 6.2
+1. Correct and simplify the following specifications.
+```{r, eval = FALSE}
+# 1
+ggplot(mpg) + 
+  geom_point(aes(mpg$displ, mpg$hwy))
+
+# 2
+ggplot() + 
+  geom_point(mapping = aes(y = hwy, x = cty), data = mpg) +
+  geom_smooth(data = mpg, mapping = aes(cty, hwy))
+
+# 3
+ggplot(diamonds, aes(carat, price)) +
+  geom_point(aes(log(brainwt), log(bodywt)), data = msleep)
+```
+2. If we add an aesthetic to the base layer, it affects all subsequent layers. What is the difference between these three plots?
+```{r, eval = FALSE}
+# 1
+ggplot(mpg, aes(x = displ, y = hwy, color = factor(cyl))) +
+  geom_point() +
+  geom_smooth(method = "lm")
+
+# 2
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point(aes(color = factor(cyl))) +
+  geom_smooth(method = "lm")
+
+# 3
+ggplot(mpg, aes(x = displ, y = hwy)) +
+  geom_point() +
+  geom_smooth(aes(color = factor(cyl)), method = "lm")
+```
+
+
+### Line Plots
+
+Line plots are created with the geom \texttt{geom\_line()}.
+```{r, fig.dim = c(4, 3)}
+ggplot(economics, aes(date, uempmed)) +
+  geom_line()
+```
+
+In a panel dataset, you will have multiple observations for each individual unit. In this case, it is necessary to specify what is the ID variable. To exemplify, load the \texttt{Oxboys} dataset from the \texttt{nlme} package (you do not need to have this package installed to access the data).
+```{r}
+data(Oxboys, package = "nlme")
+Oxboys <- tibble(Oxboys) # Optional step
+```
+
+Note the difference between these two plots. If there are multiple grouping variables, \texttt{aes(group = interaction(var1, var2)} will combine them.
+```{r, fig.dim = c(4, 3)}
+ggplot(Oxboys, aes(x = age, y = height)) +
+  geom_line()
+ggplot(Oxboys, aes(x = age, y = height, group = Subject)) +
+  geom_line()
+```
+
+The aesthetic characteristics can be moved to different layers of the plot. 
+```{r, fig.dim = c(4, 3)}
+ggplot(Oxboys, aes(x = age, y = height, group = Subject)) +
+  geom_line() +
+  geom_smooth(method = "lm", se = FALSE)
+ggplot(Oxboys, aes(x = age, y = height)) +
+  geom_line(aes(group = Subject)) +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+### Categorical Data
+
+\texttt{geom\_bar()} graphs bars that are proportional to the number of units by group. 
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = manufacturer)) +
+  geom_bar()
+ggplot(mpg, aes(y = manufacturer)) +
+  geom_bar()
+```
+
+
+Graphing over groups is very intuitive using the \texttt{fill} aesthetic as long as the variable supplied is discrete.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(class)) +
+  geom_bar()
+ggplot(mpg, aes(y = class, fill = drv)) +
+  geom_bar()
+```
+
+It is possible graph other statistics besides the count.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(drv, displ)) +
+  geom_bar(stat = "summary_bin", fun = "mean")
+```
+
+Here is another way to make the same plot as above. \texttt{geom\_col()} also graphs bars, but the height represents the values in the data. Here, we are calculating the means to be the height of the bars. This approach may be more useful if the statistic to be calculated is more complicated.
+```{r, fig.dim = c(4, 3)}
+displ_means <- mpg %>%
+  group_by(drv) %>%
+  summarise(means = mean(displ))
+displ_means
+ggplot(displ_means, aes(x = drv, y = means)) +
+  geom_col()
+```
+
+### Distributions
+
+Histograms are done with \texttt{geom\_histogram()}. Frequrency polygons are identical to histograms except with lines instead of bars. These are created with \texttt{geom\_freqpoly()}. Both use a \texttt{binwidth} or \texttt{bins} argument to bin the data. The default is 30 bins.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = hwy)) +
+  geom_histogram()
+ggplot(mpg, aes(x = hwy)) +
+  geom_histogram(binwidth = 2)
+ggplot(mpg, aes(x = hwy)) +
+  geom_histogram(bins = 40)
+ggplot(mpg, aes(x = hwy)) +
+  geom_freqpoly()
+```
+
+Density plots are created with \texttt{geom\_density()}. See \texttt{?density} for options to adjust the kernel. The default is \texttt{"gaussian"}.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = hwy)) +
+  geom_density()
+```
+
+To plot a histogram using the density rather than the number of observations (as is the default), specify that the \texttt{y} argument is \texttt{..density..}.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = hwy)) +
+  geom_histogram(aes(y = ..density..), binwidth = 2)
+```
+
+Comparing the distributions across categorical variables can be done by including other aesthetics.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = hwy, color = drv)) +
+  geom_freqpoly()
+ggplot(mpg, aes(x = hwy, linetype = drv)) +
+  geom_freqpoly()
+```
+
+There are other plot types that can be used to examine the distribution of continuous variables across discrete categories. These are \texttt{geom\_jitter()}, \texttt{geom\_boxplot()}, and \texttt{geom\_violin()}.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = drv, y = hwy)) +
+  geom_jitter()
+ggplot(mpg, aes(x = drv, y = hwy)) +
+  geom_boxplot()
+ggplot(mpg, aes(x = drv, y = hwy)) +
+  geom_violin()
+```
+
+The geoms \texttt{geom\_contour()} and \texttt{geom\_raster()} allow you to represent 3-dimensional in 2-dimensional plots. 
+
+### Practice Exercises 6.3
+1. Inspect the \texttt{diamonds} dataset, which is built-in to \texttt{ggplot2}. Create a histogram of \texttt{carat}. Modify the bins in a way that you think best fits the data. 
+2. How does the density of \texttt{price} vary by \texttt{clarity}? Create a plot to demonstrate this relationship.
+
+## Modifying the Look of the Plot
+
+
+### Axes
+
+The scale of the axes relate the aesthetics back to the data. These two plots are equivalent.
+```{r, eval = FALSE}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(color = class))
+```
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(color = class)) +
+  scale_x_continuous() +
+  scale_y_continuous() +
+  scale_color_discrete()
+```
+
+It is possible to override these default scales.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(color = class)) +
+  scale_x_continuous("Engine Displacement") +
+  scale_y_continuous("Highway MPG") +
+  scale_colour_brewer("Class")
+
+ggplot(mpg, aes(displ, hwy)) + 
+  geom_point(aes(color = class)) +
+  scale_y_continuous(trans = "log10")
+```
+
+Because naming the axes is such a common step, there is a short cut to easily change the axis labels with \texttt{xlab},  \texttt{ylab}, and \texttt{labs}. See \texttt{?plotmath} for a reference on how to add mathematical expressions to the axis labels.
+```{r, fig.dim = c(4, 3)} 
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  xlab("City Driving (MPG)") +
+  ylab("Highway Driving (MPG)") +
+  geom_point(alpha = 1 / 3)
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point(aes(color = drv), alpha = 1 / 3) +
+  labs(x = "City Driving (MPG)", 
+       y = "Highway Driving (MPG)",
+       color = "Drive") 
+```
+
+These arguments can be set to \texttt{NULL} to completely remove them.
+```{r, fig.dim = c(4, 3)} 
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  xlab(NULL) +
+  ylab(NULL) +
+  geom_point(alpha = 1 / 3)
+```
+
+Breaks and labels are also controlled with the \texttt{scale} elements. Here is how breaks and labels can be determined for the axes.
+```{r, fig.dim = c(4, 3)}
+# Continuous
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point(alpha = 1 / 3) +
+  scale_x_continuous(breaks = seq(8, 36, 2)) +
+  scale_y_continuous(breaks = c(20, 30, 40),
+                     labels = c("20 MPG", "30 MPG", "40 MPG"))
+
+# Discrete
+ggplot(mpg, aes(drv, displ))  + 
+  geom_bar(stat = "summary_bin", fun = "mean") +
+  scale_x_discrete(labels = c("4-wheel", "Front-wheel", "Rear-wheel"))
+```
+
+To completely remove breaks and labels, set them to \texttt{NULL}.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point(alpha = 1 / 3) +
+  scale_x_continuous(breaks = NULL) +
+  scale_y_continuous(labels = NULL)
+```
+
+Refer to the \texttt{scales} package for additional flexibility in specifying the axis scales and labels. 
+
+The arguments \texttt{xlim} and \texttt{ylim} alter the limits of the axes. Note that data points will be excluded if they fall outside of the limits. These are shortcuts as \texttt{limits} is an argument in the \texttt{scale} layers.
+```{r, fig.dim = c(4, 3)} 
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  xlim(c(10, 30)) +
+  ylim(c(20, 50)) +
+  geom_point(alpha = 1 / 3)
+```
+```{r, eval = FALSE} 
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point(alpha = 1 / 3) +
+  scale_x_continuous(limits = c(10, 30)) +
+  scale_y_continuous(limits = c(20, 50)) 
+```
+
+Add \texttt{na.rm = TRUE} to suppress the warning message.
+```{r, fig.dim = c(4, 3), eval = FALSE} 
+ggplot(mpg, aes(x = cty, y = hwy), na.rm = TRUE) + 
+  xlim(c(10, 30)) +
+  ylim(c(20, 50)) +
+  geom_point(alpha = 1 / 3)
+```
+
+The arguments \texttt{xlim} and \texttt{ylim} can also be used for discrete axes.
+```{r, fig.dim = c(4, 3)} 
+ggplot(mpg, aes(x = drv, y = hwy)) + 
+  geom_jitter(alpha = 1 / 3)
+```
+
+```{r, fig.dim = c(4, 3)} 
+ggplot(mpg, aes(x = drv, y = hwy)) + 
+  xlim(c("f", "r")) +
+  ylim(c(NA, 30)) +
+  geom_jitter(alpha = 1 / 3)
+```
+
+### Color Scales
+
+Continuous scales can be changed with several functions. The \texttt{colorbrewer2} colors (included in \texttt{ggplot2} and accessible through the \texttt{RColorBrewer} package) is useful with some predefined scales, even though the scales are technically designed for maps.
+```{r, fig.dim = c(4, 3)} 
+# Change the color of a continuous scale 
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point(aes(color = displ)) +
+  scale_color_gradient(low = "deeppink", high = "black")
+
+# Palette from ColorBrewer scales 
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point(aes(color = displ)) +
+  scale_color_distiller(palette = "RdPu")
+```
+```{r, eval = FALSE}
+# Specify the NA color
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point(aes(color = displ)) +
+  scale_color_distiller(palette = "RdPu", na.value = "grey53")
+```
+
+To demonstrate changing the scale of discrete data, we will use this toy plot.
+```{r,fig.dim = c(4, 3)}
+df <- data.frame(x = c("a", "b", "c", "d"), y = c(3, 4, 1, 2))
+bars <- ggplot(df, aes(x, y, fill = x)) +
+  geom_bar(stat = "identity") + 
+  labs(x = NULL, y = NULL) + 
+  theme(legend.position = "none")
+bars
+```
+
+The \texttt{scale\_colour\_hue()} function picks evenly spaced hues around the color wheel. You can specify the ranges of hues, the chroma, and the luminance. Search "HCL color space" to read more about this system. If colors have the same luninance and chroma, black and white printing will not distinguish the colors.
+```{r, fig.dim = c(4, 3)}
+# Adjust the chroma
+bars +
+  scale_fill_hue(c = 40)
+
+# Adjust the hue
+bars +
+  scale_fill_hue(h = c(180, 300))
+
+# Adjust the luminance
+bars +
+  scale_fill_hue(l = 100)
+```
+
+The ColorBrewer palettes can be accessed with \texttt{scale\_fill\_brewer}. Use \texttt{display.brewer.all()} to see the available scales.
+```{r, fig.dim = c(4, 3)}
+bars +
+  scale_fill_brewer(palette = "Set1")
+display.brewer.all()
+```
+
+The \texttt{scale\_fill\_grey()} maps discrete data to a grayscale (great for printing!).
+```{r, fig.dim = c(4, 3)}
+bars +
+  scale_fill_grey(start = 0.5, end = 1)
+```
+
+You can create your own discrete scale (or find one online) and use \texttt{scale\_fill\_manual}. 
+```{r, fig.dim = c(4, 3)}
+bars +
+  scale_fill_manual(values = c("maroon3", "slateblue3", "yellow3", "plum3"))
+
+# Color palettes from Wes Anderson movies
+library(wesanderson)
+bars +
+  scale_fill_manual(values = wes_palette("Royal1"))
+
+# Manual discrete scale with color instead of fill
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(aes(color = drv)) +
+  scale_color_manual(values = c("maroon3", "slateblue3", "yellow3", "plum3"))
+```
+
+Generally, bright colors work better for points and lines and pastel colors work better for filling in areas. You should be conscious of how the graph will be viewed (i.e., on a computer screen or printed in black and white) when selecting colors. Finally, many people are color blind.  [This article](https://towardsdatascience.com/two-simple-steps-to-create-colorblind-friendly-data-visualizations-2ed781a167ec) provides some options to ensure that your color selections are able to be understood by everyone.
+
+### Labels
+To add text to a plot, \texttt{geom\_text()} offers many options to specify exactly what you would like to appear. 
+```{r, fig.dim = c(4, 3)}
+mpg_sample <- slice_sample(mpg, n = 20)
+ggplot(mpg_sample, aes(x = cty, y = hwy)) +
+  geom_text(aes(label = manufacturer))
+```
+
+You can change the font of the labels with the \texttt{family} argument. The three fonts that will work on all computers are \texttt{"sans"} (default), \texttt{"serif"}, and \texttt{"mono"}. The argument \texttt{fontface} allows you to bold or italicize the text. The options are \texttt{"plain"} (default), \texttt{"bold"}, and \texttt{"italic"}.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg_sample, aes(x = cty, y = hwy)) +
+  geom_text(aes(label = manufacturer), family = "serif")
+ggplot(mpg_sample, aes(x = cty, y = hwy)) +
+  geom_text(aes(label = manufacturer), fontface = "bold")
+```
+
+The alignment of the text is adjusted with the \texttt{hjust} (\texttt{"left"}, \texttt{"center"}, \texttt{"right"}, \texttt{"inward"}, \texttt{"outward"}) and \texttt{vjust} (\texttt{"bottom"}, \texttt{"middle"}, \texttt{"top"}, \texttt{"inward"}, \texttt{"outward"}) arguments. The \texttt{"inward"} options are useful to ensure that the text stays within the limits of the plot.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg_sample, aes(x = cty, y = hwy)) +
+  geom_text(aes(label = manufacturer), vjust = "inward", hjust = "inward")
+```
+
+The aesthetics \texttt{size} and \texttt{angle} control the fontsize and font angle of the labels. The \texttt{size} aesthetic uses millimeters.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg_sample, aes(x = cty, y = hwy)) +
+  geom_text(aes(label = manufacturer), size = 2.5, angle = 30)
+```
+
+Labels make more sense in combination with other geoms. The arguments \texttt{nudge\_x} and \texttt{nudge\_y} allow you to specify the spacing between the label and the plot elements. The argument \texttt{check\_overlap}, if set to \texttt{TRUE}, will remove overlapping points, only keeping the first that appear. 
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg_sample, aes(x = cty, y = hwy)) +
+  geom_point() +
+  geom_text(aes(label = manufacturer), 
+            size = 3, nudge_y = -0.25, nudge_x = 0.25, 
+            hjust = "inward", vjust = "inward")
+ggplot(mpg_sample, aes(x = cty, y = hwy)) +
+  geom_point() +
+  geom_text(aes(label = manufacturer), 
+            size = 3, nudge_y = -0.25, nudge_x = 0.25, hjust = "inward", vjust = "inward", check_overlap = TRUE)
+```
+
+If you have a plot with a busier background (e.g., a heat map), you may want to add labels within a rectangle. See the geom \texttt{geom\_label()} for this scenario. The package \texttt{directlabels} is another extremely useful source for labeling plots. 
+
+### Annotations
+Apart from labels, you may want to annotate your plots with notes, descriptions, highlighted areas, etc. These are called metadata and can be treated just as you treat your data. That is, you can use the same geoms for annotation as you would to plot data. The following geoms are particularly helpful for annotation: \texttt{geom\_text()}, \texttt{geom\_rect()}, \texttt{geom\_line()}, \texttt{geom\_vline()}, \texttt{geom\_hline()}, and \texttt{geom\_abline()}.
+
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(x = cty, y = hwy)) +
+  geom_vline(xintercept = 20, color = "grey39") +
+  geom_hline(yintercept = 30, color = "grey39") +
+  geom_point() 
+```
+
+### Legends
+
+The default creation and formatting of legends is an advantage of \texttt{ggplot2}. That is, the formatting relies on the structure of the data and the aesthetic mapping. This is convenient, but can also present difficulties if the data are in a different format than what you would like for the legend. 
+
+The legend will only include a layer if it includes some mapped aesthetic with \texttt{aes()}. You can remove layers from the legend by setting \texttt{show.legend = FALSE} or add layers  to the legend by setting \texttt{show.legend = TRUE}.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(pch = 1, color = "ivory4", size = 4) +
+  geom_point(aes(color = drv)) 
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(pch = 1, color = "ivory4", size = 4, show.legend = TRUE) +
+  geom_point(aes(color = drv))
+```
+
+The layout of the legend is determined in the broader \texttt{theme}. To change the position, use \texttt{legend.position} (\texttt{"right"}, \texttt{"left"}, \texttt{"bottom"}, \texttt{"top"}, \texttt{"none"}).
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv)) +
+  theme(legend.position = "bottom")
+```
+
+You can also input a coordinate for the legend to appear inside the plot area. The bottom-left corner is (0,0) and the top-right corner is (1,1). The argument \texttt{legend.justification} adjusts which corner of the legend is being positioned by \texttt{legend.position}.
+```{r, fig.dim = c(4, 3)}
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv)) +
+  theme(legend.position = c(0.8, 0.8))
+
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = drv)) +
+  theme(legend.position = c(0.8, 0.8), 
+        legend.justification = c(1, 1))
+```
+
+Other arguments of \texttt{theme()} that control the legend layout are \texttt{legend.direction}, \texttt{legend.box}, and \texttt{legend.box.just}.
+
+The guide functions \texttt{guide\_colourbar()} (only for continuous scales) and \texttt{guide\_legend()} provide additional control over the legend. The function \texttt{guides()} is a helper function to override the options.
+```{r, eval = FALSE}
+# These are all equivalent and plot the default legend
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(aes(color = displ))
+
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(aes(color = displ)) +
+  scale_fill_continuous(guide = guide_colourbar())
+
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(aes(color = displ)) +
+  guides(color = guide_colourbar())
+```
+
+Here are some examples of changes that can be made to discrete scales.
+```{r, fig.dim = c(4, 3)}
+# Change the number of columns
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(aes(color = class)) +
+  guides(color = guide_legend(ncol = 2))
+
+# Reverse the order
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(aes(color = class)) +
+  guides(color = guide_legend(reverse = TRUE))
+
+# Specify the size of the legend keys
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(aes(color = class)) +
+  guides(color = guide_legend(keywidth = 2, keyheight = 2))
+
+# Override aesthetic element of plot
+ggplot(mpg, aes(displ, hwy)) +
+  geom_point(aes(color = class), alpha = 0.3) +
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
+```
+
+Here are some examples of changes that can be made to continuous scales.
+```{r, fig.dim = c(4, 3)}
+# Reverse the order
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(aes(color = displ)) +
+  guides(color = guide_colorbar(reverse = TRUE))
+
+# Change the size of the bar
+ggplot(mpg, aes(cty, hwy)) +
+  geom_point(aes(color = displ)) +
+  guides(color = guide_colorbar(barheight = 7, barwidth = 4))
+```
+
+### Themes
+
+Themes do not substantively change the plot. Rather, they allow you to customize the plot to match your aesthetic preferences or a style guide you are following (e.g., for a journal). 
+
+We will create this plot for demonstration. It has all of the elements discussed above already formatted.
+```{r, fig.dim = c(4, 3)}
+nice <- ggplot(mpg, aes(cty, hwy, color = factor(cyl))) +
+  geom_jitter() +
+  geom_abline(color = "grey50", size = 2) + 
+  labs(x = "City mileage/gallon",
+       y = "Highway mileage/gallon",
+       color = "Cylinders",
+       title = "Mileage by Number of Cylinders") +
+  scale_color_brewer(palette = "Spectral")
+```
+
+There are complete themes that are built-in or available through packages. Here are all the built-in themes.
+```{r, fig.dim = c(3, 2)}
+nice +
+  theme_bw()
+
+nice +
+  theme_linedraw()
+
+nice + 
+  theme_light()
+
+nice + 
+  theme_dark()
+
+nice + 
+  theme_minimal()
+
+nice + 
+  theme_classic()
+
+nice + 
+  theme_void()
+```
+
+Modifying elements of the theme is done with the following format.
+```{r, eval = FALSE}
+plot + theme(element.name = element_function())
+```
+
+The function \texttt{element\_text()} controls how labels and headings appear. The \texttt{family}, \texttt{face}, \texttt{color}, \texttt{size}, \texttt{hjust}, \texttt{vjust}, \texttt{angle}, \texttt{lineheight}, and margins can all be adjusted in this function.
+```{r, fig.dim = c(4, 3)}
+nice + 
+  theme(plot.title = element_text(size = 18, color = "khaki4"))
+```
+
+Note that any adjustment can be made to any theme.
+```{r, fig.dim = c(4, 3)}
+nice + 
+  theme_bw() + 
+  theme(plot.title = element_text(size = 18, color = "khaki4"))
+```
+
+Here is another example adjusting the axis titles as well.
+```{r, fig.dim = c(4, 3)}
+nice + 
+  theme(plot.title = element_text(size = 18, color = "khaki4"),
+        axis.title.y = element_text(family = "serif"),
+        axis.title.x = element_text(face = "italic"))
+```
+
+The function \texttt{element\_line()} draws lines with \texttt{color}, \texttt{size}, and \texttt{linetype} specified. The grid lines can be adjusted with \texttt{panel.grid.major} and \texttt{panel.grid.minor}.
+```{r, fig.dim = c(4, 3)}
+nice +
+  theme(panel.grid.major = element_line(color = "navy"),
+        panel.grid.minor = element_line(size = 2))
+```
+
+The function \texttt{element\_rect()} draws rectangles with \texttt{fill}, \texttt{color}, \texttt{size}, and \texttt{linetype} specified.
+```{r, fig.dim = c(4, 3)}
+nice +
+  theme(plot.background = element_rect(color = "lightblue4", size = 2))
+
+nice +
+  theme(panel.background = element_rect(fill = "mistyrose"))
+```
+
+To remove elements, use the function \texttt{element\_blank()}. 
+```{r, fig.dim = c(4, 3)}
+nice +
+  theme(legend.title = element_blank(),
+        panel.grid.minor = element_blank())
+```
+
+### Practice Exercises 6.4
+1. Additional themes are available in the package \texttt{ggthemes}. Run the following to see the complete list.
+```{r, eval = FALSE} 
+ls("package:ggthemes")[grepl("theme_", ls("package:ggthemes"))]
+```
+Which theme among the built-in themes and the \texttt{ggthemes} is closest to your most-preferred look? Choose one that you will then modify. What would you like to change about the theme?
+
+2. [Refer to the Themes chapter of Wickham's book](http://link.springer.com/10.1007/978-3-319-24277-4). This chapter lists all the the elements that can be adjusted. Create your theme! Make note of any particularly pleasing (or displeasing) changes along the way.
+
+3. Define a function with the name of your theme. [This tutorial](https://rpubs.com/mclaire19/ggplot2-custom-themes) explains how to do that towards the end.
+
+## Save
+
+Outside of loops and functions, plots are rendered directly on the screen. You can save them using the \texttt{ggsave()} command.
+
+```{r, eval = FALSE} 
+ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point(alpha = 1 / 3)
+ggsave("Example1.jpg")
+```
+
+Inside a loop or function, you can print the graph first before saving.
+```{r, eval = FALSE} 
+g <- ggplot(mpg, aes(x = cty, y = hwy)) + 
+  geom_point(alpha = 1 / 3) 
+print(g)
+ggsave("Example2.png")
+```
+
+The available extensions are \texttt{.eps}, \texttt{.pdf}, \texttt{.svg}, \texttt{.wmf}, \texttt{.png}, \texttt{.jpg}, \texttt{.bmp}, and \texttt{.tiff}.
+
+## Quick Plots
+
+The above allows you to create highly customized plots that perfectly suit the message of your data and your aesthetic preferences. However, often you may prefer to quickly produce a plot without these details. The \texttt{qplot()} is the \texttt{ggplot2} function for this.
+
+If both the \texttt{x} and \texttt{y} arguments appear, \texttt{qplot()} plots a scatter plot. If there is only the \texttt{x} argument, \texttt{qplot()} creates a histogram (or bar chart if the variable is discrete).
+```{r, fig.dim = c(4, 3)}
+qplot(displ, hwy, data = mpg)
+qplot(displ, data = mpg)
+qplot(displ, hwy, data = mpg, color = drv)
+```
+
+If you do want to change the appearance of the plot, you need to use \texttt{I()}. There are other ways to format plots made through \texttt{qplot()}, but at that point, it is better to use \texttt{ggplot()} to fully customize.
+```{r, fig.dim = c(4, 3)}
+qplot(displ, hwy, data = mpg, color = I("hotpink"))
+```
+
+
+
+# Further Reading
+
+If you prefer built-in plotting over \texttt{ggplot2}, see @rahlf_data_2017. To better understand the "grammar" of \texttt{ggplot2}, see @wickham_ggplot2_2016.
+
+## References
